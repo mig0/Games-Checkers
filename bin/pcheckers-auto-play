@@ -1,0 +1,103 @@
+#!/usr/bin/perl
+
+# Games::Checkers, Copyright (C) 1996-2012 Mikhael Goikhman, migo@cpan.org
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Try --help for usage.
+
+use strict;
+use warnings;
+
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use Getopt::Long;
+
+use Games::Checkers::Board;
+use Games::Checkers::Constants;
+use Games::Checkers::BoardTree;
+
+my $script_name = ($0 =~ m:([^/]+)$:, $1);
+my $level = 3;
+my $pause = 1;
+my $random = 'none';  # '' means both, 'w' or 'b' - white or black only
+my $max_move_num = 100;
+
+sub show_help (;$) {
+	my $is_error = shift || 0;
+	my $out = $is_error ? \*STDERR : \*STDOUT;
+	my $usage = qq{
+		Usage: $script_name [OPTIONS]
+		The automatical Checkers gameplay.
+
+		Options:
+			-h --help          show this help and exit
+			-l --level N       strength level (default: $level)
+			-p --pause N       pause in seconds between the moves
+			-r --random [w|b]  perform random (not best) moves for both/white/black
+			-T --dumb-term     do not position terminal cursor
+			-C --dumb-chars    do not use fancy drawing characters
+			-m --move-num N    limit the game moves to the number
+			-g --give-away     change rules to "give away"
+	};
+	$usage =~ s/^\n//; $usage =~ s/^\t\t?//mg;
+	print $out $usage;
+	exit $is_error;
+}
+
+GetOptions(
+	"h|help"        => sub { show_help(0) },
+	"l|level=s"     => \$level,
+	"p|pause=s"     => \$pause,
+	"r|random:s"    => \$random,
+	"T|dumb-term!"  => \$ENV{DUMB_TERM},
+	"C|dumb-chars!" => \$ENV{DUMB_CHARS},
+	"m|move-num=s"  => \$max_move_num,
+	"g|give-away!"  => \$Games::Checkers::give_away,
+) || show_help(1);
+
+$| = 1;
+my $board = Games::Checkers::Board->new;
+
+sub print_board () {
+	print "\e[1;1H\e[?25l" unless $ENV{DUMB_TERM};
+	print $board->dump;
+	print "\e[?25h" unless $ENV{DUMB_TERM};
+}
+
+print "\e[2J" unless $ENV{DUMB_TERM};
+print_board;
+
+my $color = White;
+
+my $num_moves = 0;
+while ($board->can_color_move($color)) {
+	sleep($pause);
+	if ($num_moves++ == $max_move_num * 2) {
+		print "Maximal number of moves reached ($max_move_num). Automatic draw.\n";
+		exit;
+	}
+	my $board_tree = Games::Checkers::BoardTree->new($board, $color, $level);
+	my $move = $random eq '' || $random eq ($color == White ? 'w' : 'b')
+		? $board_tree->choose_random_move
+		: $board_tree->choose_best_move;
+	$board->transform($move);
+	printf "  %02d. %s", (1 + $num_moves) / 2, $color == White ? "" : "... ";
+	print $move->dump, "                           \n";
+	print_board;
+
+	$color = $color == White ? Black : White;
+}
+
+print "\n", ["Black", "White"]->[$color == White ? 0 : 1], " won. \n";

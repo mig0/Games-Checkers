@@ -1,0 +1,132 @@
+#!/usr/bin/perl
+
+# Games::Checkers, Copyright (C) 1996-2012 Mikhael Goikhman, migo@cpan.org
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Try --help for usage.
+
+use strict;
+use warnings;
+
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use Getopt::Long;
+
+use Games::Checkers::Board;
+use Games::Checkers::Constants;
+use Games::Checkers::MoveConstants;
+use Games::Checkers::PDNParser;
+use Games::Checkers::CreateMoveList;
+
+my $script_name = ($0 =~ m:([^/]+)$:, $1);
+my $pause = 1;
+my $break = 10;
+my $game_start = 1;
+
+sub show_help (;$) {
+	my $is_error = shift || 0;
+	my $out = $is_error ? \*STDERR : \*STDOUT;
+	my $usage = qq{
+		Usage: $script_name [OPTIONS] file.pdn
+		The automatical replay of recorded Checkers games from PDN file.
+
+		Options:
+			-h --help          show this help and exit
+			-p --pause N       pause in seconds between the moves ($pause sec)
+			-b --break N       pause in seconds between the games ($break sec)
+			-s --start N       skip N-1 games, start with N's game
+			-T --dumb-term     do not position terminal cursor
+			-C --dumb-chars    do not use fancy drawing characters
+	};
+	$usage =~ s/^\n//; $usage =~ s/^\t\t?//mg;
+	print $out $usage;
+	exit $is_error;
+}
+
+GetOptions(
+	"h|help"        => sub { show_help(0) },
+	"p|pause=i"     => \$pause,
+	"b|break=i"     => \$break,
+	"s|start=i"     => \$game_start,
+	"T|dumb-term!"  => \$ENV{DUMB_TERM},
+	"C|dumb-chars!" => \$ENV{DUMB_CHARS},
+) || show_help(1);
+
+$| = 1;
+my $board;
+
+sub print_board () {
+	print "\e[1;1H\e[?25l" unless $ENV{DUMB_TERM};
+	print $board->dump;
+	print "\e[?25h" unless $ENV{DUMB_TERM};
+}
+
+my %result_string = (
+	'1-0' => "Black resigned",
+	'0-1' => "White resigned",
+	'1/2-1/2' => "Draw is agreed",
+);
+
+my $games_dir = "$FindBin::Bin/../data/games";
+my $filename = shift;
+$filename = "default/default.pdn" if !$filename && -t;
+$filename ||= "-" unless -t;
+show_help() unless $filename;
+$filename = "$games_dir/$filename" if $filename =~ m!^\w+\/[^\/]+$!;
+
+$ENV{ITALIAN_BOARD_NOTATION} = 1 if $filename =~ m!/italian/!;
+
+my $pdn_parser = Games::Checkers::PDNParser->new($filename);
+
+my $game_count = 0;
+while (my $pdn_record = $pdn_parser->next_record) {
+	$game_count++;
+	next if $game_count < $game_start;
+	my ($move_verge_trios, $values) = @$pdn_record;
+
+	$board = Games::Checkers::Board->new;
+
+	print "\e[2J" unless $ENV{DUMB_TERM};
+	print_board;
+
+	my $color = White;
+
+	my $move_count = 0;
+	while (@$move_verge_trios) {
+		sleep($pause);
+		$move_count++;
+		my $move_to_show = (1 + $move_count) / 2;
+
+		my $move_verge_trio = shift @$move_verge_trios;
+		my ($is_beat, $src, $dst) = @$move_verge_trio;
+		my $creating_move = Games::Checkers::CreateVergeMove->new(
+			$board, $color, $is_beat, $src, $dst);
+		die "Internal problem" unless $creating_move->status == Ok;
+		my $move = $creating_move->get_move;
+		die "Corrupt game #$game_count record? Move #$move_to_show ($src, $dst) can't be created\n"
+			if $move == NO_MOVE;
+
+		$board->transform($move);
+		printf "  %02d. %s", $move_to_show, $color == White ? "" : "... ";
+		print $move->dump, "                           \n";
+		print_board;
+
+		$color = $color == White ? Black : White;
+	}
+
+	my $result = $values->{Result} || "";
+	print "\n", $result_string{$result} || "Unknown result ($result)", "\n";
+	sleep($break);
+}
