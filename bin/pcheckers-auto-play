@@ -24,14 +24,14 @@ use FindBin;
 use lib "$FindBin::Bin/../lib";
 use Getopt::Long;
 
-use Games::Checkers::Board;
-use Games::Checkers::Constants;
-use Games::Checkers::BoardTree;
+use Games::Checkers::Game;
 
 my $script_name = ($0 =~ m:([^/]+)$:, $1);
 my $level = 3;
 my $pause = 1;
 my $random = 'none';  # '' means both, 'w' or 'b' - white or black only
+my $dumb_term = 0;
+my $dumb_chars = 0;
 my $max_move_num = 100;
 
 sub show_help (;$) {
@@ -61,43 +61,29 @@ GetOptions(
 	"l|level=s"     => \$level,
 	"p|pause=s"     => \$pause,
 	"r|random:s"    => \$random,
-	"T|dumb-term!"  => \$ENV{DUMB_TERM},
-	"C|dumb-chars!" => \$ENV{DUMB_CHARS},
+	"T|dumb-term!"  => \$dumb_term,
+	"C|dumb-chars!" => \$dumb_chars,
 	"m|move-num=s"  => \$max_move_num,
 	"g|give-away!"  => \$Games::Checkers::give_away,
 ) || show_help(1);
 
-$| = 1;
-my $board = Games::Checkers::Board->new;
+my $game = Games::Checkers::Game->new(
+	level => $level,
+	random => $random eq 'none' ? 0 : $random || 1,
+	max_move_num => $max_move_num,
+);
 
-sub print_board () {
-	print "\e[1;1H\e[?25l" unless $ENV{DUMB_TERM};
-	print $board->dump;
-	print "\e[?25h" unless $ENV{DUMB_TERM};
-}
-
-print "\e[2J" unless $ENV{DUMB_TERM};
-print_board;
-
-my $color = White;
+$game->show_board;
 
 my $num_moves = 0;
-while ($board->can_color_move($color)) {
+while ($game->can_move) {
 	sleep($pause);
-	if ($num_moves++ == $max_move_num * 2) {
+	if ($game->is_max_move_num_reached) {
 		print "Maximal number of moves reached ($max_move_num). Automatic draw.\n";
 		exit;
 	}
-	my $board_tree = Games::Checkers::BoardTree->new($board, $color, $level);
-	my $move = $random eq '' || $random eq ($color == White ? 'w' : 'b')
-		? $board_tree->choose_random_move
-		: $board_tree->choose_best_move;
-	$board->transform($move);
-	printf "  %02d. %s", (1 + $num_moves) / 2, $color == White ? "" : "... ";
-	print $move->dump, "                           \n";
-	print_board;
-
-	$color = $color == White ? Black : White;
+	$game->show_move($game->choose_move);
+	$game->show_board;
 }
 
-print "\n", ["Black", "White"]->[$color == White ? 0 : 1], " won. \n";
+$game->show_who_won;

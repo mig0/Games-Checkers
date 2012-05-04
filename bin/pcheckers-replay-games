@@ -24,16 +24,15 @@ use FindBin;
 use lib "$FindBin::Bin/../lib";
 use Getopt::Long;
 
-use Games::Checkers::Board;
-use Games::Checkers::Constants;
-use Games::Checkers::MoveConstants;
 use Games::Checkers::PDNParser;
-use Games::Checkers::CreateMoveList;
+use Games::Checkers::Game;
 
 my $script_name = ($0 =~ m:([^/]+)$:, $1);
 my $pause = 1;
 my $break = 10;
 my $game_start = 1;
+my $dumb_term = 0;
+my $dumb_chars = 0;
 
 sub show_help (;$) {
 	my $is_error = shift || 0;
@@ -60,18 +59,9 @@ GetOptions(
 	"p|pause=i"     => \$pause,
 	"b|break=i"     => \$break,
 	"s|start=i"     => \$game_start,
-	"T|dumb-term!"  => \$ENV{DUMB_TERM},
-	"C|dumb-chars!" => \$ENV{DUMB_CHARS},
+	"T|dumb-term!"  => \$dumb_term,
+	"C|dumb-chars!" => \$dumb_chars,
 ) || show_help(1);
-
-$| = 1;
-my $board;
-
-sub print_board () {
-	print "\e[1;1H\e[?25l" unless $ENV{DUMB_TERM};
-	print $board->dump;
-	print "\e[?25h" unless $ENV{DUMB_TERM};
-}
 
 my %result_string = (
 	'1-0' => "Black resigned",
@@ -96,34 +86,22 @@ while (my $pdn_record = $pdn_parser->next_record) {
 	next if $game_count < $game_start;
 	my ($move_verge_trios, $values) = @$pdn_record;
 
-	$board = Games::Checkers::Board->new;
+	my $game = Games::Checkers::Game->new;
 
-	print "\e[2J" unless $ENV{DUMB_TERM};
-	print_board;
+	$game->show_board;
 
-	my $color = White;
-
-	my $move_count = 0;
 	while (@$move_verge_trios) {
 		sleep($pause);
-		$move_count++;
-		my $move_to_show = (1 + $move_count) / 2;
 
 		my $move_verge_trio = shift @$move_verge_trios;
 		my ($is_beat, $src, $dst) = @$move_verge_trio;
-		my $creating_move = Games::Checkers::CreateVergeMove->new(
-			$board, $color, $is_beat, $src, $dst);
-		die "Internal problem" unless $creating_move->status == Ok;
-		my $move = $creating_move->get_move;
-		die "Corrupt game #$game_count record? Move #$move_to_show ($src, $dst) can't be created\n"
-			if $move == NO_MOVE;
 
-		$board->transform($move);
-		printf "  %02d. %s", $move_to_show, $color == White ? "" : "... ";
-		print $move->dump, "                           \n";
-		print_board;
+		my $move = $game->create_move($is_beat, $src, $dst);
+		die "Corrupt game #$game_count record? Move ($src, $dst) can't be created\n"
+			unless $move;
 
-		$color = $color == White ? Black : White;
+		$game->show_move($move);
+		$game->show_board;
 	}
 
 	my $result = $values->{Result} || "";

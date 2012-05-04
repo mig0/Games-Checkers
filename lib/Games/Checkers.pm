@@ -33,6 +33,23 @@ Games::Checkers - Play the Checkers games
 =head1 SYNOPSIS
 
     # automatic computer-vus-computer play script
+    use Games::Checkers::Game;
+
+    my $game = Games::Checkers::Game->new(level => 2);
+
+    $game->show_board;
+
+    while ($game->can_move) {
+        sleep(2);
+        $game->show_move($game->choose_move);
+        $game->show_board;
+    }
+
+    $game->show_who_won;
+    
+# Or the same on a lower level:
+
+    # automatic computer-vus-computer play script
     use Games::Checkers::Constants;
     use Games::Checkers::Board;
     use Games::Checkers::BoardTree;
@@ -218,6 +235,7 @@ forward directions.
     Games::Checkers::DeclareConstant
     Games::Checkers::ExpandMoveList
     Games::Checkers::FigureIterator
+    Games::Checkers::Game
     Games::Checkers::IteratorConstants
     Games::Checkers::Iterators
     Games::Checkers::KingBeatIterator
