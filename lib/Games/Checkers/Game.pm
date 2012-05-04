@@ -28,7 +28,7 @@ sub new ($%) {
 	my $class = shift;
 	my %params = @_;
 
-	$ENV{DUMB_CHARS} ||= $params{dumb_chars};
+	$ENV{DUMB_CHARS} = 1 if $params{dumb_chars};
 	
 	my $self = {
 		use_term => 1,  # force until we have GUI
