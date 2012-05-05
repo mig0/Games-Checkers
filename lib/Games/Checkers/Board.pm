@@ -36,6 +36,10 @@ sub new ($;$) {
 	return $self;
 }
 
+sub get_size ($) {
+	return 8;
+}
+
 sub occup ($$) {
 	my $self = shift;
 	my $loc = shift;
@@ -316,16 +320,19 @@ sub dump ($;$) {
 	];
 	my %ch = %{$char_sets->[$ENV{DUMB_CHARS} ? 0 : 1]};
 
-	my $str = "";
+	my $size = $self->get_size;
+	my $size_1 = $size - 1;
+	my $size_2 = $size / 2;
 
+	my $str = "";
 	$str .= "\n";
-	$str .= "  " . $ch{tlc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{htl}" x 7) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{trc}\n";
-	for (my $i = 0; $i < 8; $i++) {
-		$str .= (8 - $i) . " $ch{vcl}";
-		for (my $j = 0; $j < 8; $j++) {
+	$str .= "  " . $ch{tlc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{htl}" x $size_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{trc}\n";
+	for (my $i = 0; $i < $size; $i++) {
+		$str .= ($size - $i) . " $ch{vcl}";
+		for (my $j = 0; $j < $size; $j++) {
 			my $is_used = ($i + $j) % 2;
 			if (($i + $j) % 2) {
-				my $loc = (7 - $i) * 4 + int($j / 2);
+				my $loc = ($size_1 - $i) * $size_2 + int($j / 2);
 				my $ch0 = $ch{bcf};
 				my $is_king = $self->piece($loc) == King;
 				$ch0 = $self->white($loc) ? $is_king ? "8" : "O" : $is_king ? "&" : "@"
@@ -339,13 +346,14 @@ sub dump ($;$) {
 			$str .= $ch{vcl};
 		}
 		$str .= "\n";
-		$str .= "  " . $ch{vll} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{ccl}" x 7) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{vrl}\n" if $i != 7;
+		$str .= "  " . $ch{vll} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{ccl}" x $size_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{vrl}\n" if $i != $size_1;
 	}
-	$str .= "  " . $ch{blc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{hbl}" x 7) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{brc}\n";
+	$str .= "  " . $ch{blc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{hbl}" x $size_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{brc}\n";
 	$str .= "    a   b   c   d   e   f   g   h  \n";
 	$str .= "\n";
 
 	$str =~ s/^/$prefix/gm;
+
 	return $str;
 }
 
