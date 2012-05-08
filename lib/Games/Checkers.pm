@@ -114,7 +114,8 @@ In the future one script C<pcheckers> may be installed that will include:
 	* recorded game replay (current script pcheckers-replay-games)
 	* interactive game play of 1 or 2 human players
 
-GUI interface using SDL may be added too, or may be not.
+If SDL perl modules are installed, then the SDL support is automatically
+detected and activated that replaces the default terminal IO.
 
 =head1 The Rules of Checkers
 
@@ -252,6 +253,7 @@ forward directions.
     Games::Checkers::PieceRuleIterator
     Games::Checkers::Player
     Games::Checkers::PlayerConstants
+    Games::Checkers::SDL
     Games::Checkers::UserPlayer
     Games::Checkers::ValidKingBeatIterator
 
