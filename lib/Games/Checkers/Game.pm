@@ -32,7 +32,11 @@ sub new ($%) {
 
 	my $board = Games::Checkers::Board->new;
 
-	my $frontend = undef;  # force until we have GUI
+	# probe and use if available
+	my $frontend = !$ENV{USE_TERM} && eval q{
+		use Games::Checkers::SDL;
+		Games::Checkers::SDL->new($board);
+	};
 
 	my $self = {
 		frontend => $frontend,
