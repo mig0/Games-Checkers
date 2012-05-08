@@ -40,12 +40,12 @@ Games::Checkers - Play the Checkers games
     $game->show_board;
 
     while ($game->can_move) {
-        sleep(2);
+        $game->sleep(2);
         $game->show_move($game->choose_move);
         $game->show_board;
     }
 
-    $game->show_who_won;
+    $game->show_result;
     
 # Or the same on a lower level:
 

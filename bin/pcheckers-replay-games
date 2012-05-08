@@ -91,7 +91,7 @@ while (my $pdn_record = $pdn_parser->next_record) {
 	$game->show_board;
 
 	while (@$move_verge_trios) {
-		sleep($pause);
+		$game->sleep($pause);
 
 		my $move_verge_trio = shift @$move_verge_trios;
 		my ($is_beat, $src, $dst) = @$move_verge_trio;
@@ -105,6 +105,6 @@ while (my $pdn_record = $pdn_parser->next_record) {
 	}
 
 	my $result = $values->{Result} || "";
-	print "\n", $result_string{$result} || "Unknown result ($result)", "\n";
-	sleep($break);
+	$game->show_result($result_string{$result} || "Unknown result ($result)");
+	$game->sleep($break);
 }

@@ -29,11 +29,15 @@ sub new ($%) {
 	my %params = @_;
 
 	$ENV{DUMB_CHARS} = 1 if $params{dumb_chars};
-	
+
+	my $board = Games::Checkers::Board->new;
+
+	my $frontend = undef;  # force until we have GUI
+
 	my $self = {
-		use_term => 1,  # force until we have GUI
+		frontend => $frontend,
 		dumb_term => $params{dumb_term},
-		board => Games::Checkers::Board->new,
+		board => $board,
 		level => $params{level} || 3,
 		random => $params{random} || 0,
 		max_move_num => $params{max_move_num} || 1000,
@@ -47,7 +51,9 @@ sub new ($%) {
 sub _init ($) {
 	my $self = shift;
 
-	if ($self->{use_term}) {
+	if ($self->{frontend}) {
+		$self->{frontend}->init;
+	} else {
 		$| = 1;
 		print "\e[2J" unless $self->{dumb_term};
 	}
@@ -58,10 +64,23 @@ sub _init ($) {
 	return $self;
 }
 
+sub sleep ($$) {
+	my $self = shift;
+	my $secs = shift || 0;
+
+	if ($self->{frontend}) {
+		$self->{frontend}->sleep($secs);
+	} else {
+		sleep($secs);
+	}	
+}
+
 sub show_board ($) {
 	my $self = shift;
 
-	if ($self->{use_term}) {
+	if ($self->{frontend}) {
+		$self->{frontend}->show_board;
+	} else {
 		print "\e[1;1H\e[?25l" unless $self->{dumb_term};
 		print $self->{board}->dump;
 		print "\e[?25h" unless $self->{dumb_term};
@@ -119,24 +138,30 @@ sub show_move ($$) {
 		$self->{$_}
 	} qw(board color move_count);
 
-	$board->transform($move);
-
-	if ($self->{use_term}) {
+	if ($self->{frontend}) {
+		$self->{frontend}->show_move($move, $color, $move_count);
+	} else {
 		printf "  %02d. %s", 1 + $move_count / 2, $color == White ? "" : "... ";
 		print $move->dump, "                           \n";
 	}
+
+	$board->transform($move);
 
 	$self->{color} = $color == White ? Black : White;
 	$self->{move_count}++;
 }
 
-sub show_who_won ($) {
+sub show_result ($;$) {
 	my $self = shift;
+	my $message = shift || ($self->is_max_move_num_reached
+		? "Automatic draw after $self->{max_move_num} moves."
+		: ($self->{color} == White ? "Black" : "White") . " won."
+	);
 
-	my $color = $self->{color};
-
-	if ($self->{use_term}) {
-		print "\n", ["Black", "White"]->[$color == White ? 0 : 1], " won. \n";
+	if ($self->{frontend}) {
+		$self->{frontend}->show_result($message);
+	} else {
+		print "\n$message\e[0K\n";
 	}
 }
 

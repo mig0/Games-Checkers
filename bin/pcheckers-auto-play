@@ -77,13 +77,10 @@ $game->show_board;
 
 my $num_moves = 0;
 while ($game->can_move) {
-	sleep($pause);
-	if ($game->is_max_move_num_reached) {
-		print "Maximal number of moves reached ($max_move_num). Automatic draw.\n";
-		exit;
-	}
+	$game->sleep($pause);
+	last if $game->is_max_move_num_reached;
 	$game->show_move($game->choose_move);
 	$game->show_board;
 }
 
-$game->show_who_won;
+$game->show_result;
