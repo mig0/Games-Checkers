@@ -19,14 +19,16 @@ use warnings;
 package Games::Checkers::SDL;
 
 use Games::Checkers::Constants;
+use Games::Checkers::Iterators;
+use Games::Checkers::LocationConversions;
 
 use SDL;
 use SDL::Event;
 use SDL::Events;
-use SDL::Video;  
-
-use SDLx::LayerManager;
-use SDLx::Layer;
+use SDL::Rect;
+use SDL::Surface;
+use SDL::Video;
+use SDL::Image;
 use SDLx::Text;
 
 sub new ($$%) {
@@ -45,26 +47,29 @@ sub new ($$%) {
 	SDL::init(SDL_INIT_VIDEO);
 	my $display = SDL::Video::set_video_mode($w, $h, 32, SDL_HWSURFACE | SDL_HWACCEL);
 	SDL::Video::fill_rect($display, SDL::Rect->new(0, 0, $w, $h), 0x286068);
-	my $layers = SDLx::LayerManager->new;
+	my $bg_surface = SDL::Surface->new(0, 64 * $size, 64 * $size);
 
 	my $self = {
 		board => $board,
-		cell_imgs => [
+		cells => [
 			SDL::Image::load("$image_dir/cell-white.png"),
 			SDL::Image::load("$image_dir/cell-black.png"),
 		],
-		pawn_imgs => {
-			White => SDL::Image::load("$image_dir/pawn-white.png"),
-			Black => SDL::Image::load("$image_dir/pawn-black.png"),
-		},
-		king_imgs => {
-			White => SDL::Image::load("$image_dir/pawn-white.png"),
-			Black => SDL::Image::load("$image_dir/pawn-black.png"),
+		pieces => {
+			&Pawn => {
+				&White => SDL::Image::load("$image_dir/pawn-white.png"),
+				&Black => SDL::Image::load("$image_dir/pawn-black.png"),
+			},
+			&King => {
+				&White => SDL::Image::load("$image_dir/king-white.png"),
+				&Black => SDL::Image::load("$image_dir/king-black.png"),
+			},
 		},
 		w => $w,
 		h => $h,
+		move_str_y => 0,
 		display => $display,
-		layers => $layers,
+		bg_surface => $bg_surface,
 		event => SDL::Event->new,
 		text => SDLx::Text->new(shadow => 1, shadow_offset => 2),
 		mouse_pressed => 0,
@@ -82,19 +87,14 @@ sub init ($) {
 
 	for my $x (0 .. $size - 1) {
 		for my $y (0 .. $size - 1) {
-			$self->{layers}->add(
-				SDLx::Layer->new(
-					$self->{cell_imgs}->[($x + $y) % 2],
-					144 + 64 * $x,
-					44 + 64 * $y,
-					{ id => chr(ord('A') + $x) . ($y + 1) }
-				)
+			SDL::Video::blit_surface(
+				$self->{cells}[($x + $y) % 2],
+				0,
+				$self->{bg_surface},
+				SDL::Rect->new(64 * $x, 64 * $y, 64, 64)
 			);
 		}
 	}
-
-	$self->{layers}->blit($self->{display});
-	$self->process_pending_events;
 
 	return $self;
 }
@@ -131,10 +131,46 @@ sub sleep ($$) {
 	} while $secs >= 0;
 }
 
-sub show_board ($$) {
+sub show_board ($) {
 	my $self = shift;
 
 	my $board = $self->{board};
+	my $size = $board->get_size;
+
+	# draw empty board first
+if (0) {
+	SDL::Video::blit_surface(
+		$self->{bg_surface},
+		0,
+		$self->{display},
+		SDL::Rect->new(44, 44, 64 * $size, 64 * $size),
+	);
+} else {
+	for my $x (0 .. $size - 1) {
+		for my $y (0 .. $size - 1) {
+			SDL::Video::blit_surface(
+				$self->{cells}[($x + $y) % 2],
+				0,
+				$self->{display},
+				SDL::Rect->new(44 + 64 * $x, 44 + 64 * $y, 64, 64)
+			);
+		}
+	}
+}
+
+	for my $color (White, Black) {
+		my $iterator = Games::Checkers::FigureIterator->new($board, $color);
+		for my $location ($iterator->all) {
+			my $piece = $board->piece($location);
+			my ($x, $y) = location_to_arr($location);
+			SDL::Video::blit_surface(
+				$self->{pieces}{$piece}{$color},
+				0,
+				$self->{display},
+				SDL::Rect->new(52 + 64 * ($x - 1), 52 + 64 * (8 - $y), 48, 48)
+			);
+		}
+	}
 
 	$self->process_pending_events;
 }
@@ -144,6 +180,17 @@ sub show_move ($$$$$) {
 	my $move = shift;
 	my $color = shift;
 	my $count = shift;
+
+	my $str = $move->dump;
+	my $x = 0;
+	if ($count % 2 == 0) {
+		$self->{move_msg_y} += 20;
+		$str = ($count / 2 + 1) . ". $str";
+	} else {
+		$x = 117;
+	}
+
+	$self->{text}->write_xy($self->{display}, 580 + $x, $self->{move_msg_y}, $str);
 
 	$self->process_pending_events;
 }
