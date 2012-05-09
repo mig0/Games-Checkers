@@ -43,19 +43,19 @@ sub get_size ($) {
 sub occup ($$) {
 	my $self = shift;
 	my $loc = shift;
-	return !!($self->{occup_map} & (1 << $loc));
+	return $self->{occup_map} & (1 << $loc) ? 1 : 0;
 }
 
 sub color ($$) {
 	my $self = shift;
 	my $loc = shift;
-	return !!($self->{color_map} & (1 << $loc));
+	return $self->{color_map} & (1 << $loc) ? Black : White;
 }
 
 sub piece ($$) {
 	my $self = shift;
 	my $loc = shift;
-	return !!($self->{piece_map} & (1 << $loc));
+	return $self->{piece_map} & (1 << $loc) ? King : Pawn;
 }
 
 sub white ($$) {
