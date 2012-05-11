@@ -135,12 +135,12 @@ sub process_pending_events ($) {
 
 sub sleep ($$) {
 	my $self = shift;
-	my $secs = shift || 0;
+	my $fsecs = (shift || 0) * 50;
 
 	do {
 		$self->process_pending_events;
-		sleep(1) if $secs--;
-	} while $secs >= 0;
+		select(undef, undef, undef, 0.02) if $fsecs--;
+	} while $fsecs >= 0;
 }
 
 sub show_board ($) {
