@@ -22,7 +22,7 @@ use warnings;
 
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-use Getopt::Long;
+use Getopt::Long qw(:config no_ignore_case bundling);
 
 use Games::Checkers::PDNParser;
 use Games::Checkers::Game;
@@ -31,6 +31,7 @@ my $script_name = ($0 =~ m:([^/]+)$:, $1);
 my $pause = 1;
 my $break = 10;
 my $game_start = 1;
+my $use_term = 0;  # 0 means detect automatically
 my $dumb_term = 0;
 my $dumb_chars = 0;
 
@@ -39,13 +40,14 @@ sub show_help (;$) {
 	my $out = $is_error ? \*STDERR : \*STDOUT;
 	my $usage = qq{
 		Usage: $script_name [OPTIONS] file.pdn
-		The automatical replay of recorded Checkers games from PDN file.
+		The automatic replay of recorded Checkers games from PDN file.
 
 		Options:
 			-h --help          show this help and exit
 			-p --pause N       pause in seconds between the moves ($pause sec)
 			-b --break N       pause in seconds between the games ($break sec)
 			-s --start N       skip N-1 games, start with N's game
+			-t --use-term      use terminal even if graphical frontend is available
 			-T --dumb-term     do not position terminal cursor
 			-C --dumb-chars    do not use fancy drawing characters
 	};
@@ -59,6 +61,7 @@ GetOptions(
 	"p|pause=i"     => \$pause,
 	"b|break=i"     => \$break,
 	"s|start=i"     => \$game_start,
+	"t|use-term!"   => \$use_term,
 	"T|dumb-term!"  => \$dumb_term,
 	"C|dumb-chars!" => \$dumb_chars,
 ) || show_help(1);
@@ -91,6 +94,9 @@ while (my $pdn_record = $pdn_parser->next_record) {
 		description => join("\n", map {
 			$values->{$_} ? "$_: $values->{$_}" : ()
 		} qw(Event Site Date Round Game)),
+		use_term => $use_term,
+		dumb_term => $dumb_term,
+		dumb_chars => $dumb_chars,
 	);
 
 	$game->show_board;

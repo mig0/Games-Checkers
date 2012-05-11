@@ -22,7 +22,7 @@ use warnings;
 
 use FindBin;
 use lib "$FindBin::Bin/../lib";
-use Getopt::Long;
+use Getopt::Long qw(:config no_ignore_case bundling);
 
 use Games::Checkers::Game;
 
@@ -30,6 +30,7 @@ my $script_name = ($0 =~ m:([^/]+)$:, $1);
 my $level = 3;
 my $pause = 1;
 my $random = 'none';  # '' means both, 'w' or 'b' - white or black only
+my $use_term = 0;  # 0 means detect automatically
 my $dumb_term = 0;
 my $dumb_chars = 0;
 my $max_move_num = 100;
@@ -39,13 +40,14 @@ sub show_help (;$) {
 	my $out = $is_error ? \*STDERR : \*STDOUT;
 	my $usage = qq{
 		Usage: $script_name [OPTIONS]
-		The automatical Checkers gameplay.
+		The automatic Checkers gameplay.
 
 		Options:
 			-h --help          show this help and exit
 			-l --level N       strength level (default: $level)
 			-p --pause N       pause in seconds between the moves
 			-r --random [w|b]  perform random (not best) moves for both/white/black
+			-t --use-term      use terminal even if graphical frontend is available
 			-T --dumb-term     do not position terminal cursor
 			-C --dumb-chars    do not use fancy drawing characters
 			-m --move-num N    limit the game moves to the number
@@ -61,6 +63,7 @@ GetOptions(
 	"l|level=s"     => \$level,
 	"p|pause=s"     => \$pause,
 	"r|random:s"    => \$random,
+	"t|use-term!"   => \$use_term,
 	"T|dumb-term!"  => \$dumb_term,
 	"C|dumb-chars!" => \$dumb_chars,
 	"m|move-num=s"  => \$max_move_num,
@@ -72,6 +75,9 @@ my $game = Games::Checkers::Game->new(
 	level => $level,
 	random => $random eq 'none' ? 0 : $random || 1,
 	max_move_num => $max_move_num,
+	use_term => $use_term,
+	dumb_term => $dumb_term,
+	dumb_chars => $dumb_chars,
 );
 
 $game->show_board;

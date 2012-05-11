@@ -34,7 +34,7 @@ sub new ($%) {
 	my $board = Games::Checkers::Board->new;
 
 	# probe and use if available
-	my $frontend = !$ENV{USE_TERM} && eval q{
+	my $frontend = !($params{use_term} || $ENV{USE_TERM}) && eval q{
 		use Games::Checkers::SDL;
 		Games::Checkers::SDL->new($title, $board);
 	};
