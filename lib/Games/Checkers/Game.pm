@@ -30,18 +30,20 @@ sub new ($%) {
 
 	$ENV{DUMB_CHARS} = 1 if $params{dumb_chars};
 
+	my $title = $params{title} || "Unknown White - Unknown Black";
 	my $board = Games::Checkers::Board->new;
 
 	# probe and use if available
 	my $frontend = !$ENV{USE_TERM} && eval q{
 		use Games::Checkers::SDL;
-		Games::Checkers::SDL->new($board);
+		Games::Checkers::SDL->new($title, $board);
 	};
 
 	my $self = {
+		title => $params{title} || $title,
+		board => $board,
 		frontend => $frontend,
 		dumb_term => $params{dumb_term},
-		board => $board,
 		level => $params{level} || 3,
 		random => $params{random} || 0,
 		max_move_num => $params{max_move_num} || 1000,
@@ -85,7 +87,10 @@ sub show_board ($) {
 	if ($self->{frontend}) {
 		$self->{frontend}->show_board;
 	} else {
+		my $title = $self->{title};
+		my $indent = int((37 - length($title)) / 2);
 		print "\e[1;1H\e[?25l" unless $self->{dumb_term};
+		print " " x $indent, $title, "\n";
 		print $self->{board}->dump;
 		print "\e[?25h" unless $self->{dumb_term};
 	}

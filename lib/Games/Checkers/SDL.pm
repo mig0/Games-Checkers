@@ -31,9 +31,10 @@ use SDL::Video;
 use SDL::Image;
 use SDLx::Text;
 
-sub new ($$%) {
+sub new ($$$%) {
 	my $class = shift;
-	my $board = shift;
+	my $title = shift || die;
+	my $board = shift || die;
 	my %params = @_;
 
 	my $image_dir = ($FindBin::Bin || "bin") . "/../data/images";
@@ -47,6 +48,17 @@ sub new ($$%) {
 	SDL::init(SDL_INIT_VIDEO);
 	my $display = SDL::Video::set_video_mode($w, $h, 32, SDL_HWSURFACE | SDL_HWACCEL);
 	SDL::Video::fill_rect($display, SDL::Rect->new(0, 0, $w, $h), 0x286068);
+	my $title_text = SDLx::Text->new(
+		size    => 24,
+		color   => [255, 255, 210],
+		bold    => 1,
+		shadow  => 1,
+		x       => 44 + 64 * 4,
+		y       => 6,
+		h_align => 'center',
+		text    => $title,
+	);
+	$title_text->write_to($display);
 	my $bg_surface = SDL::Surface->new(0, 64 * $size, 64 * $size);
 
 	my $self = {
@@ -71,7 +83,7 @@ sub new ($$%) {
 		display => $display,
 		bg_surface => $bg_surface,
 		event => SDL::Event->new,
-		text => SDLx::Text->new(shadow => 1, shadow_offset => 2),
+		text => SDLx::Text->new(shadow => 1, shadow_offset => 2, size => 20),
 		mouse_pressed => 0,
 	};
 
@@ -199,7 +211,10 @@ sub show_result ($$) {
 	my $self = shift;
 	my $message = shift;
 
-	$self->{text}->write_to($self->{display}, $message);
+	my $text = $self->{text};
+	$text->h_align('center');
+	$text->color([220, 220, 150]);
+	$text->write_xy($self->{display}, ($self->{w} + 540) / 2, 0, $message);
 	$self->sleep(6);
 }
 

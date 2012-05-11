@@ -68,6 +68,7 @@ GetOptions(
 ) || show_help(1);
 
 my $game = Games::Checkers::Game->new(
+	title => join(' - ', ("Computer (lv $level)") x 2),
 	level => $level,
 	random => $random eq 'none' ? 0 : $random || 1,
 	max_move_num => $max_move_num,
