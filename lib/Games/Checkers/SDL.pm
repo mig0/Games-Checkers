@@ -47,10 +47,14 @@ sub new ($$$%) {
 
 	SDL::init(SDL_INIT_VIDEO);
 	my $display = SDL::Video::set_video_mode($w, $h, 32, SDL_HWSURFACE | SDL_HWACCEL);
+
 	SDL::Video::fill_rect($display, SDL::Rect->new(0, 0, $w, $h), 0x286068);
+	SDL::Video::fill_rect($display, SDL::Rect->new(41, 41, 64 * $size + 6, 64 * $size + 6), 0x50d050);
+	SDL::Video::fill_rect($display, SDL::Rect->new(43, 43, 64 * $size + 2, 64 * $size + 2), 0x202020);
+
 	my $title_text = SDLx::Text->new(
 		size    => 24,
-		color   => [255, 255, 210],
+		color   => 0xffffdc,
 		bold    => 1,
 		shadow  => 1,
 		x       => 44 + 64 * 4,
@@ -59,6 +63,16 @@ sub new ($$$%) {
 		text    => $title,
 	);
 	$title_text->write_to($display);
+
+	my $coord_text = SDLx::Text->new(
+		size    => 20,
+		color   => 0xd8d8d0,
+		shadow  => 1,
+		h_align => 'center',
+	);
+	$coord_text->write_xy($display, 28, 66 + 64 * ($size - $_), $_) for 1 .. $size;
+	$coord_text->write_xy($display, 77 + 64 * $_, $h - 40, chr(ord('a') + $_)) for 0 .. $size-1;
+
 	my $bg_surface = SDL::Surface->new(0, 64 * $size, 64 * $size);
 
 	my $self = {
@@ -179,7 +193,7 @@ if (0) {
 				$self->{pieces}{$piece}{$color},
 				0,
 				$self->{display},
-				SDL::Rect->new(52 + 64 * ($x - 1), 52 + 64 * (8 - $y), 48, 48)
+				SDL::Rect->new(52 + 64 * ($x - 1), 52 + 64 * ($size - $y), 48, 48)
 			);
 		}
 	}
