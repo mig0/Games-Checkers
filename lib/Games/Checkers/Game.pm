@@ -164,7 +164,8 @@ sub show_result ($;$) {
 	my $self = shift;
 	my $message = shift || ($self->is_max_move_num_reached
 		? "Automatic draw after $self->{max_move_num} moves."
-		: ($self->{color} == White ? "Black" : "White") . " won."
+		: (($self->{color} == White xor $Games::Checkers::give_away)
+			? "Black" : "White") . " won."
 	);
 
 	if ($self->{frontend}) {
