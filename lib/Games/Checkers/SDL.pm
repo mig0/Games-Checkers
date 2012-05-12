@@ -62,7 +62,7 @@ sub new ($$$%) {
 		color   => 0xffffdc,
 		bold    => 1,
 		shadow  => 1,
-		x       => 44 + 64 * 4,
+		x       => 44 + 64 * $size / 2,
 		y       => 6,
 		h_align => 'center',
 		text    => $title,
@@ -135,6 +135,33 @@ sub quit ($) {
 	exit(0);
 }
 
+sub pause ($) {
+	my $self = shift;
+
+	my $size = $self->{board}->get_size;
+	my $x_centered = 44 + 64 * $size / 2;
+	my $display = $self->{display};
+
+	$self->{paused} = 1;
+	SDLx::Text->new(
+		size    => 18,
+		color   => 0xffa0a0,
+		bold    => 1,
+		shadow  => 1,
+		x       => $x_centered,
+		y       => $self->{h} - 20,
+		h_align => 'center',
+		text    => '- PAUSED -',
+	)->write_to($display);
+
+	while ($self->process_pending_events != 2) {
+		select(undef, undef, undef, 0.1);
+	}
+
+	$self->{paused} = 0;
+	SDL::Video::fill_rect($display, SDL::Rect->new($x_centered - 75, $self->{h} - 20, 75 * 2, 20), 0x286068);
+}
+
 sub toggle_fullscreen ($) {
 	my $self = shift;
 
@@ -151,14 +178,18 @@ sub process_pending_events ($) {
 
 	SDL::Events::pump_events();
 	while (SDL::Events::poll_event($event)) {
-		$self->toggle_fullscreen
-			if $event->type == SDL_KEYUP && $event->key_sym == SDLK_RETURN
+		$self->toggle_fullscreen, next
+			if $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_RETURN
 			&& $event->key_mod & KMOD_ALT
-			|| $event->type == SDL_KEYUP && $event->key_sym == SDLK_F11
-			|| $event->type == SDL_KEYUP && $event->key_sym == SDLK_f
+			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_F11
+			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_f
 			|| $event->type == SDL_MOUSEBUTTONDOWN
 			&& abs($event->motion_x - $self->{w} + 14) <= 10
 			&& abs($event->motion_y -              14) <= 10;
+
+		return 2
+			if $self->{paused}
+			&& ($event->type == SDL_KEYDOWN || $event->type == SDL_MOUSEBUTTONDOWN);
 
 		$self->{mouse_pressed} = $event->type == SDL_MOUSEBUTTONDOWN
 			if $event->button_button == SDL_BUTTON_LEFT;
@@ -167,7 +198,13 @@ sub process_pending_events ($) {
 			if $event->type == SDL_QUIT
 			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE
 			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_q;
+
+		$self->pause
+			if $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_p
+			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_SPACE;
 	}
+
+	return 1;
 }
 
 sub sleep ($$) {
