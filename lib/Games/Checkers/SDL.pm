@@ -31,6 +31,24 @@ use SDL::Video;
 use SDL::Image;
 use SDLx::Text;
 
+sub fill_rect_tiled ($$$) {
+	my $surface = shift || die;
+	my $rect = shift || die;
+	my $tile = shift || die;
+
+	my ($x0, $y0, $w0, $h0) = ref($rect) eq 'ARRAY'
+		? @$rect
+		: ($rect->x, $rect->y, $rect->w, $rect->h);
+	my $w = $tile->w;
+	my $h = $tile->h;
+
+	for (my $x = $x0; $x < $x0 + $w0; $x += $w) {
+		for (my $y = $y0; $y < $y0 + $h0; $y += $h) {
+			SDL::Video::blit_surface($tile, 0, $surface, SDL::Rect->new($x, $y, $w, $h));
+		}
+	}
+}
+
 sub new ($$$%) {
 	my $class = shift;
 	my $title = shift || die;
@@ -53,7 +71,8 @@ sub new ($$$%) {
 
 	SDL::Video::wm_set_caption("Checkers: $title", "Checkers");
 
-	SDL::Video::fill_rect($display, SDL::Rect->new(0, 0, $w, $h), 0x286068);
+	fill_rect_tiled($display, SDL::Rect->new(0, 0, $w, $h), SDL::Image::load("$image_dir/bg-tile.jpg"));
+
 	SDL::Video::fill_rect($display, SDL::Rect->new(41, 41, 64 * $size + 6, 64 * $size + 6), 0x50d050);
 	SDL::Video::fill_rect($display, SDL::Rect->new(43, 43, 64 * $size + 2, 64 * $size + 2), 0x202020);
 	SDL::Video::fill_rect($display, SDL::Rect->new($w - 25, 4, 21, 21), 0xe0e0e0);
