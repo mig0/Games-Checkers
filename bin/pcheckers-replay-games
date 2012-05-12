@@ -34,6 +34,7 @@ my $game_start = 1;
 my $use_term = 0;  # 0 means detect automatically
 my $dumb_term = 0;
 my $dumb_chars = 0;
+my $fullscreen = 0;
 
 sub show_help (;$) {
 	my $is_error = shift || 0;
@@ -50,6 +51,7 @@ sub show_help (;$) {
 			-t --use-term      use terminal even if graphical frontend is available
 			-T --dumb-term     do not position terminal cursor
 			-C --dumb-chars    do not use fancy drawing characters
+			-f --fullscreen    start in fullscreen mode (incompatible with -t)
 	};
 	$usage =~ s/^\n//; $usage =~ s/^\t\t?//mg;
 	print $out $usage;
@@ -64,6 +66,7 @@ GetOptions(
 	"t|use-term!"   => \$use_term,
 	"T|dumb-term!"  => \$dumb_term,
 	"C|dumb-chars!" => \$dumb_chars,
+	"f|fullscreen!" => \$fullscreen,
 ) || show_help(1);
 
 my %result_string = (
@@ -97,6 +100,7 @@ while (my $pdn_record = $pdn_parser->next_record) {
 		use_term => $use_term,
 		dumb_term => $dumb_term,
 		dumb_chars => $dumb_chars,
+		fullscreen => $fullscreen,
 	);
 
 	$game->show_board;

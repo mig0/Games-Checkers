@@ -45,12 +45,17 @@ sub new ($$$%) {
 	my $w = $size == 8 ? 800 : 1024;
 	my $h = $size == 8 ? 600 : 768;
 
+	my $fullscreen = $params{fullscreen} ? 1 : 0;
+
 	SDL::init(SDL_INIT_VIDEO);
-	my $display = SDL::Video::set_video_mode($w, $h, 32, SDL_HWSURFACE | SDL_HWACCEL);
+	my $mode = SDL_HWSURFACE | SDL_HWACCEL | ($fullscreen && SDL_FULLSCREEN);
+	my $display = SDL::Video::set_video_mode($w, $h, 32, $mode);
 
 	SDL::Video::fill_rect($display, SDL::Rect->new(0, 0, $w, $h), 0x286068);
 	SDL::Video::fill_rect($display, SDL::Rect->new(41, 41, 64 * $size + 6, 64 * $size + 6), 0x50d050);
 	SDL::Video::fill_rect($display, SDL::Rect->new(43, 43, 64 * $size + 2, 64 * $size + 2), 0x202020);
+	SDL::Video::fill_rect($display, SDL::Rect->new($w - 25, 4, 21, 21), 0xe0e0e0);
+	SDL::Video::fill_rect($display, SDL::Rect->new($w - 23, 6, 17, 17), 0x707070);
 
 	my $title_text = SDLx::Text->new(
 		size    => 24,
@@ -99,6 +104,7 @@ sub new ($$$%) {
 		event => SDL::Event->new,
 		text => SDLx::Text->new(shadow => 1, shadow_offset => 2, size => 20),
 		mouse_pressed => 0,
+		fullscreen => $fullscreen,
 	};
 
 	bless $self, $class;
@@ -129,6 +135,13 @@ sub quit ($) {
 	exit(0);
 }
 
+sub toggle_fullscreen ($) {
+	my $self = shift;
+
+	$self->{fullscreen} ^= 1;
+	SDL::Video::wm_toggle_fullscreen($self->{display});
+}
+
 sub process_pending_events ($) {
 	my $self = shift;
 
@@ -138,12 +151,22 @@ sub process_pending_events ($) {
 
 	SDL::Events::pump_events();
 	while (SDL::Events::poll_event($event)) {
+		$self->toggle_fullscreen
+			if $event->type == SDL_KEYUP && $event->key_sym == SDLK_RETURN
+			&& $event->key_mod & KMOD_ALT
+			|| $event->type == SDL_KEYUP && $event->key_sym == SDLK_F11
+			|| $event->type == SDL_KEYUP && $event->key_sym == SDLK_f
+			|| $event->type == SDL_MOUSEBUTTONDOWN
+			&& abs($event->motion_x - $self->{w} + 14) <= 10
+			&& abs($event->motion_y -              14) <= 10;
+
 		$self->{mouse_pressed} = $event->type == SDL_MOUSEBUTTONDOWN
 			if $event->button_button == SDL_BUTTON_LEFT;
 
 		$self->quit
 			if $event->type == SDL_QUIT
-			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE;
+			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE
+			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_q;
 	}
 }
 

@@ -33,6 +33,7 @@ my $random = 'none';  # '' means both, 'w' or 'b' - white or black only
 my $use_term = 0;  # 0 means detect automatically
 my $dumb_term = 0;
 my $dumb_chars = 0;
+my $fullscreen = 0;
 my $max_move_num = 100;
 
 sub show_help (;$) {
@@ -50,6 +51,7 @@ sub show_help (;$) {
 			-t --use-term      use terminal even if graphical frontend is available
 			-T --dumb-term     do not position terminal cursor
 			-C --dumb-chars    do not use fancy drawing characters
+			-f --fullscreen    start in fullscreen mode (incompatible with -t)
 			-m --move-num N    limit the game moves to the number
 			-g --give-away     change rules to "give away"
 	};
@@ -66,6 +68,7 @@ GetOptions(
 	"t|use-term!"   => \$use_term,
 	"T|dumb-term!"  => \$dumb_term,
 	"C|dumb-chars!" => \$dumb_chars,
+	"f|fullscreen!" => \$fullscreen,
 	"m|move-num=s"  => \$max_move_num,
 	"g|give-away!"  => \$Games::Checkers::give_away,
 ) || show_help(1);
@@ -78,6 +81,7 @@ my $game = Games::Checkers::Game->new(
 	use_term => $use_term,
 	dumb_term => $dumb_term,
 	dumb_chars => $dumb_chars,
+	fullscreen => $fullscreen,
 );
 
 $game->show_board;

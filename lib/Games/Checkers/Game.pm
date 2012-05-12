@@ -36,7 +36,7 @@ sub new ($%) {
 	# probe and use if available
 	my $frontend = !($params{use_term} || $ENV{USE_TERM}) && eval q{
 		use Games::Checkers::SDL;
-		Games::Checkers::SDL->new($title, $board);
+		Games::Checkers::SDL->new($title, $board, fullscreen => $params{fullscreen});
 	};
 
 	my $self = {
