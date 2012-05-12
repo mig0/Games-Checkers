@@ -51,6 +51,8 @@ sub new ($$$%) {
 	my $mode = SDL_HWSURFACE | SDL_HWACCEL | ($fullscreen && SDL_FULLSCREEN);
 	my $display = SDL::Video::set_video_mode($w, $h, 32, $mode);
 
+	SDL::Video::wm_set_caption("Checkers: $title", "Checkers");
+
 	SDL::Video::fill_rect($display, SDL::Rect->new(0, 0, $w, $h), 0x286068);
 	SDL::Video::fill_rect($display, SDL::Rect->new(41, 41, 64 * $size + 6, 64 * $size + 6), 0x50d050);
 	SDL::Video::fill_rect($display, SDL::Rect->new(43, 43, 64 * $size + 2, 64 * $size + 2), 0x202020);
@@ -139,19 +141,20 @@ sub pause ($) {
 	my $self = shift;
 
 	my $size = $self->{board}->get_size;
-	my $x_centered = 44 + 64 * $size / 2;
 	my $display = $self->{display};
+
+	my $display_copy = SDL::Video::display_format($display);
 
 	$self->{paused} = 1;
 	SDLx::Text->new(
-		size    => 18,
-		color   => 0xffa0a0,
-		bold    => 1,
+		size    => 110,
+		color   => 0xffffff,
+		bold    => 0,
 		shadow  => 1,
-		x       => $x_centered,
-		y       => $self->{h} - 20,
+		x       => $self->{w} / 2,
+		y       => $self->{h} / 2 - 58,
 		h_align => 'center',
-		text    => '- PAUSED -',
+		text    => 'PAUSED',
 	)->write_to($display);
 
 	while ($self->process_pending_events != 2) {
@@ -159,7 +162,7 @@ sub pause ($) {
 	}
 
 	$self->{paused} = 0;
-	SDL::Video::fill_rect($display, SDL::Rect->new($x_centered - 75, $self->{h} - 20, 75 * 2, 20), 0x286068);
+	SDL::Video::blit_surface($display_copy, 0, $display, 0);
 }
 
 sub toggle_fullscreen ($) {
