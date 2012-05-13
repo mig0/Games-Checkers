@@ -76,6 +76,8 @@ my %result_string = (
 );
 
 my $games_dir = "$FindBin::Bin/../data/games";
+$games_dir = "$FindBin::Bin/../share/pcheckers/games"
+	unless -d $games_dir;
 my $filename = shift;
 $filename = "default/default.pdn" if !$filename && -t;
 $filename ||= "-" unless -t;

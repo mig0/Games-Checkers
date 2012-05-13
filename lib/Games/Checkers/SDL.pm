@@ -56,6 +56,8 @@ sub new ($$$%) {
 	my %params = @_;
 
 	my $image_dir = ($FindBin::Bin || "bin") . "/../data/images";
+	$image_dir = ($FindBin::Bin || "bin") . "/../share/pcheckers/images"
+		unless -d $image_dir;
 	die "No expected image dir $image_dir\n"
 		unless -d $image_dir && -x _;
 
