@@ -18,8 +18,6 @@ use warnings;
 
 package Games::Checkers::BoardTreeNode;
 
-use base 'Games::Checkers::Board';
-
 use Games::Checkers::Constants;
 use Games::Checkers::MoveConstants;
 use Games::Checkers::CreateMoveList;
@@ -38,11 +36,14 @@ sub new ($$$) {
 	my $board = shift;
 	my $move = shift;
 
-	my $self = $class->SUPER::new($board);
-	$self->{move} = $move;
-	$self->{sons} = [];
-	$self->{expanded} = 0;
-	return $self;
+	my $self = {
+		board => $board,
+		move => $move,
+		sons => [],
+		expanded => 0,
+	};
+
+	return bless $self, $class;
 }
 
 #       o                                                    3  0
@@ -57,13 +58,20 @@ sub expand ($$) {
 	my $self = shift;
 	my $color = shift;
 
-	my $creating_moves = Games::Checkers::CreateMoveList->new($self, $color);
+	my $board = $self->{board};
+	my $builder = Games::Checkers::CreateMoveList->new($board, $color);
+
+	@{$self->{sons}} = map {
+		Games::Checkers::BoardTreeNode->new($_->[1], $_->[0])
+	} @{$builder->get_move_boards};
 	$self->{expanded} = 1;
-	return $creating_moves->{status};
+
+	return $builder->{status};
 }
 
 sub unexpand ($) {
 	my $self = shift;
+
 	$_->unexpand foreach @{$self->{sons}};
 	@{$self->{sons}} = ();
 	$self->{expanded} = 0;
@@ -80,10 +88,11 @@ sub is_better_cost ($$$$) {
 	my $max = ($cost1 > $cost2) ? $cost1 : $cost2;
 	my $min = ($cost1 < $cost2) ? $cost1 : $cost2;
 	my $best = ($color == ($Games::Checkers::give_away ? Black : White)) ? $max : $min;
+
 	return $best == $cost1;
 }
 
-sub choose_best_son ($$$$$) {
+sub choose_best_son ($$$$) {
 	my $self = shift;
 	my $color = shift;
 	my $level = shift;
@@ -109,7 +118,7 @@ sub choose_best_son ($$$$$) {
 
 	if (!defined $best_node) {
 		$best_node = $self;
-		$best_cost = $self->get_cost($color);
+		$best_cost = $self->{board}->get_cost($color);
 	} elsif ($level == $max_level - 1) {
 		$best_node = $self;
 	}

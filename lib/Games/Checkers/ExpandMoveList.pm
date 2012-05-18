@@ -72,7 +72,7 @@ sub build_continue ($) {
 	while ($rule_iterator->left) {
 		next if $self->add_dst($rule_iterator->next) == Err;
 		if ($self->can_create_move) {
-			$self->{status} = $self->add_move;
+			$self->{status} = $self->gather_move;
 		} else {
 			$self->build_continue;
 		}
@@ -81,7 +81,7 @@ sub build_continue ($) {
 	}
 }
 
-sub add_move ($) {
+sub gather_move ($) {
 	my $self = shift;
 	die "Pure virtual method is called";
 }

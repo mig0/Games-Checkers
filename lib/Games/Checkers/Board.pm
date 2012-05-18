@@ -26,11 +26,12 @@ sub new ($;$) {
 	my $class = shift;
 	my $board = shift;
 
-	my $self = {
-		occup_map => 0xFFF00FFF,
-		color_map => 0xFFFF0000,
-		piece_map => 0x00000000,
-	};
+	my $data = '';
+	vec($data, 0, 32) = 0xFFF00FFF;
+	vec($data, 1, 32) = 0xFFFF0000;
+	vec($data, 2, 32) = 0x00000000;
+
+	my $self = \$data;
 	bless $self, $class;
 	$self->copy($board) if defined $board;
 	return $self;
@@ -43,19 +44,19 @@ sub get_size ($) {
 sub occup ($$) {
 	my $self = shift;
 	my $loc = shift;
-	return $self->{occup_map} & (1 << $loc) ? 1 : 0;
+	return vec($$self, 0, 32) & (1 << $loc) ? 1 : 0;
 }
 
 sub color ($$) {
 	my $self = shift;
 	my $loc = shift;
-	return $self->{color_map} & (1 << $loc) ? Black : White;
+	return vec($$self, 1, 32) & (1 << $loc) ? Black : White;
 }
 
 sub piece ($$) {
 	my $self = shift;
 	my $loc = shift;
-	return $self->{piece_map} & (1 << $loc) ? King : Pawn;
+	return vec($$self, 2, 32) & (1 << $loc) ? King : Pawn;
 }
 
 sub white ($$) {
@@ -70,31 +71,44 @@ sub black ($$) {
 	return $self->occup($loc) && $self->color($loc) == Black;
 }
 
+sub clone ($) {
+	my $self = shift;
+
+	return ref($self)->new($self);
+}
+
 sub copy ($$) {
 	my $self = shift;
 	my $board = shift;
 
-	$self->{$_} = $board->{$_} for qw(occup_map color_map piece_map);
+	$$self = $$board;
+
 	return $self;
 }
 
 sub clr_all ($) {
 	my $self = shift;
-	$self->{occup_map} = 0;
+	vec($$self, 0, 32) = 0;
 }
 
 sub clr ($$) {
 	my $self = shift;
 	my $loc = shift;
-	$self->{occup_map} &= ~(1 << $loc);
+	vec($$self, 0, 32) &= ~(1 << $loc);
+}
+
+sub cnv ($$) {
+	my $self = shift;
+	my $loc = shift;
+	vec($$self, 2, 32) ^= ~(1 << $loc);
 }
 
 sub set ($$$$) {
 	my $self = shift;
 	my ($loc, $color, $type) = @_;
-	$self->{occup_map} |= (1 << $loc);
-	($self->{color_map} &= ~(1 << $loc)) |= ((1 << $loc) * $color);
-	($self->{piece_map} &= ~(1 << $loc)) |= ((1 << $loc) * $type);
+	vec($$self, 0, 32) |= (1 << $loc);
+	(vec($$self, 1, 32) &= ~(1 << $loc)) |= ((1 << $loc) * $color);
+	(vec($$self, 2, 32) &= ~(1 << $loc)) |= ((1 << $loc) * $type);
 }
 
 
@@ -128,7 +142,7 @@ sub get_cost ($$) {
 		+ ($turn == White ? 1 : -1);
 }
 
-sub transform ($) {
+sub apply_move ($) {
 	my $self = shift;
 	my $move = shift;
 
@@ -143,7 +157,7 @@ sub transform ($) {
 		$self->clr($self->figure_between($src, $dst)) if $beat;
 		# convert to king if needed
 		if (convert_type->[$color][$piece] & (1 << $dst)) {
-			$self->{piece_map} ^= (1 << $dst);
+			vec($$self, 2, 32) ^= (1 << $dst);
 			$piece ^= 1;
 		}
 	}
@@ -269,10 +283,11 @@ sub figure_between ($$$) {
 #     a   b   c   d   e   f   g   h  
 #
 
-sub dump ($;$) {
+sub dump ($;$$$) {
 	my $self = shift;
-	my $prefix = shift || "";
-	$prefix = "    " x $prefix if $prefix =~ /^\d+$/;
+	my $sprefix = shift || "";
+	my $cprefix = shift || "";
+	my $compact = shift || $ENV{COMPACT_BOARD};
 
 	my $char_sets = [
 		{
@@ -326,7 +341,8 @@ sub dump ($;$) {
 
 	my $str = "";
 	$str .= "\n";
-	$str .= "  " . $ch{tlc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{htl}" x $size_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{trc}\n";
+	$str .= "  " . $ch{tlc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{htl}" x $size_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{trc}\n"
+		unless $compact;
 	for (my $i = 0; $i < $size; $i++) {
 		$str .= ($size - $i) . " $ch{vcl}";
 		for (my $j = 0; $j < $size; $j++) {
@@ -346,13 +362,30 @@ sub dump ($;$) {
 			$str .= $ch{vcl};
 		}
 		$str .= "\n";
-		$str .= "  " . $ch{vll} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{ccl}" x $size_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{vrl}\n" if $i != $size_1;
+		$str .= "  " . $ch{vll} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{ccl}" x $size_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{vrl}\n"
+			unless $compact || $i == $size_1;
 	}
-	$str .= "  " . $ch{blc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{hbl}" x $size_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{brc}\n";
-	$str .= "    a   b   c   d   e   f   g   h  \n";
-	$str .= "\n";
+	$str .= "  " . $ch{blc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{hbl}" x $size_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{brc}\n"
+		unless $compact;
+   $str .= "    a   b   c   d   e   f   g   h   \n";
+	$str .= "\n" unless $compact;
 
-	$str =~ s/^/$prefix/gm;
+	$str =~ s/(?:\e\)0)?((?:\e.*?m)*.(?:\e.*?m)*)(\016.\017|.)((?:\e.*?m)*)(\016.\017|.)((?:\e.*?m)*)(\016.\017|.)((?:\e.*?m)*)/$1$3$5$7/g
+		if $compact;
+
+	# prepare prefix for each board line, if any
+	my $lines = () = $str =~ /\n/g;
+	$sprefix = "    " x $sprefix if $sprefix =~ /^\d+$/;
+	my @cprefix = $cprefix ? $cprefix =~ /(\w\d[:-]\w\d|:\w\d|-\d{1,5}|\d{1,6})/g : ();
+	my $l = 0;
+	my @prefix = map {
+		my $p = $sprefix ? $sprefix =~ s!(.*)\n!! ? $1 : $sprefix : '';
+		$p .= sprintf " %6s  ", @cprefix && $l++ >= ($lines - @cprefix) / 2 ? shift @cprefix : ''
+			if $cprefix;
+		$p
+	} 1 .. $lines;
+
+	$str =~ s/^/shift @prefix/gme;
 
 	return $str;
 }

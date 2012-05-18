@@ -154,7 +154,7 @@ sub show_move ($$) {
 		print $move->dump, "                           \n";
 	}
 
-	$board->transform($move);
+	$board->apply_move($move);
 
 	$self->{color} = $color == White ? Black : White;
 	$self->{move_count}++;

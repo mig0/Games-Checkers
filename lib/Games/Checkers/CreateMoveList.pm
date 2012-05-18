@@ -27,25 +27,32 @@ use Games::Checkers::MoveConstants;
 
 sub new ($$$) {
 	my $class = shift;
-	my $board_tree_node = shift;
+	my $board = shift;
 	my $color = shift;
-	my $self = $class->SUPER::new($board_tree_node, $color);
+	my $self = $class->SUPER::new($board, $color);
 
-	$self->{board_tree_node} = $board_tree_node;
+	$self->{mbs} = [];
 
 	$self->build;
 	return $self;
 }
 
-sub add_move ($) {
+sub gather_move ($) {
 	my $self = shift;
+
 	my $move = $self->create_move;
 	return Err unless $move;  ### not needed
 	die "Internal Error" if $move == NO_MOVE;
-	my $new_board_tree_node = Games::Checkers::BoardTreeNode->new($self, $move);
-	return Err unless $new_board_tree_node;  ### not needed
-	push @{$self->{board_tree_node}->{sons}}, $new_board_tree_node;
+
+	push @{$self->{mbs}}, [ $move, $self->{work_board}->clone ];
+
 	return Ok;
+}
+
+sub get_move_boards ($) {
+	my $self = shift;
+
+	return $self->{mbs};
 }
 
 # ----------------------------------------------------------------------------
@@ -68,7 +75,7 @@ sub new ($$$) {
 	return $self;
 }
 
-sub add_move ($) {
+sub gather_move ($) {
 	my $self = shift;
 	$self->{count}++;
 	return Ok;
@@ -100,7 +107,7 @@ sub new ($$$) {
 	return $self;
 }
 
-sub add_move ($) {
+sub gather_move ($) {
 	my $self = shift;
 	return Err if $self->{move} != NO_MOVE;
 	$self->{move} = $self->create_move;
@@ -165,7 +172,7 @@ sub new ($$$$$$) {
 	return $self;
 }
 
-sub add_move ($) {
+sub gather_move ($) {
 	my $self = shift;
 
 	return Err if !$self->{must_beat};
