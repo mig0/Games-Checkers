@@ -116,19 +116,30 @@ sub get_cost ($$) {
 	my $self = shift;
 	my $turn = shift;
 
+	my $size = $self->get_size;
+	my $size_1 = $size - 1;
+	my $size_2 = $size / 2;
+
 	# Count white & black figures
-	my ($white_pawns, $white_kings, $black_pawns, $black_kings) = (0) x 4;
+	my (
+		$white_pawns, $white_kings, $white_bonus,
+		$black_pawns, $black_kings, $black_bonus
+	) = (0) x 6;
 
 	my $whites_iterator = new Games::Checkers::FigureIterator($self, White);
 	while ($whites_iterator->left) {
 		my $loc = $whites_iterator->next;
-		$self->piece($loc) == Pawn ? $white_pawns++ : $white_kings++;
+		my $is_pawn = $self->piece($loc) == Pawn;
+		$is_pawn ? $white_pawns++ : $white_kings++;
+		$white_bonus += int($loc / $size_2) if $is_pawn;
 	}
 
 	my $blacks_iterator = new Games::Checkers::FigureIterator($self, Black);
 	while ($blacks_iterator->left) {
 		my $loc = $blacks_iterator->next;
-		$self->piece($loc) == Pawn ? $black_pawns++ : $black_kings++;
+		my $is_pawn = $self->piece($loc) == Pawn;
+		$is_pawn ? $black_pawns++ : $black_kings++;
+		$black_bonus += $size_1 - int($loc / $size_2) if $is_pawn;
 	}
 
 	return -1e8 if $white_pawns + $white_kings == 0;
@@ -137,8 +148,10 @@ sub get_cost ($$) {
 	return
 		+ $white_pawns * 100
 		+ $white_kings * 600
+		+ $white_bonus * 10
 		- $black_pawns * 100
 		- $black_kings * 600
+		- $black_bonus * 10
 		+ ($turn == White ? 1 : -1);
 }
 
