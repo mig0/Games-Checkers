@@ -44,7 +44,13 @@ sub init ($$) {
 
 	# support "a1,a3/h6/h2/b8" or "/22,4,8/9" param
 	if (!$param_class) {
-		$board_or_locs = [ map { [ split ',' ] } split '/', $board_or_locs ];
+		my @l;
+		if ($board_or_locs eq 'random') {
+			push @{$l[4 * rand() ** 2] ||= []}, $_ for grep { rand(2) > 1 } 1 .. 32;
+		} else {
+			@l = map { [ split ',' ] } split '/', $board_or_locs;
+		}
+		$board_or_locs = \@l;
 		$param_class = 'ARRAY';
 	}
 
@@ -52,21 +58,22 @@ sub init ($$) {
 		unless $param_class eq 'ARRAY';
 
 	# support [ [], [ 22, 4, 8 ], [ 9 ] ] param
-	my @color_piece_locs = @$board_or_locs;
-	for my $color (White, Black) {
-		for my $piece (Pawn, King) {
-			my $locs = shift @color_piece_locs || [];
+	my @piece_color_locs = @$board_or_locs;
+	for my $piece (Pawn, King) {
+		for my $color (White, Black) {
+			my $locs = shift @piece_color_locs || [];
 			for my $loc (@$locs) {
 				$loc = ref($loc) eq 'ARRAY'
 					? arr_to_location($loc->[0], $loc->[1])
-					: $loc =~ /^\w/
-						? str_to_location($loc)
-						: num_to_location($loc);
+					: $loc =~ /^\d/
+						? num_to_location($loc)
+						: str_to_location($loc);
 				$self->set($loc, $color, $piece);
-				$self->cnv($loc) if convert_type->[$color][$piece];
+				$self->cnv($loc) if convert_type->[$color][$piece] & (1 << $loc);
 			}
 		}
 	}
+
 	return $self;
 }
 
@@ -144,7 +151,7 @@ sub clr ($$) {
 sub cnv ($$) {
 	my $self = shift;
 	my $loc = shift;
-	vec($$self, 2, 32) ^= ~(1 << $loc);
+	vec($$self, 2, 32) ^= (1 << $loc);
 }
 
 sub set ($$$$) {

@@ -17,19 +17,6 @@ use Games::Checkers::BoardConstants;
 my $board = Games::Checkers::Board->new($ENV{BOARD});
 my $color = White;
 
-if ($ENV{RANDOM_BOARD}) {
-	my $rate = 0 + $ENV{RANDOM_BOARD};
-	$rate = 1 if $rate <= 0 || $rate > 3;
-	$board->clr_all;
-	for my $loc (0 .. 31) {
-		next if rand(4) > $rate;
-		my $color = rand(2) > 1 ? White : Black;
-		my $piece = rand(4) > 1 ? Pawn  : King;
-		$board->set($loc, $color, $piece);
-		$board->cnv($loc) if convert_type->[$color][$piece];
-	}
-}
-
 my $move_counter = Games::Checkers::CountMoveList->new($board, $color);
 die "Internal problem" unless $move_counter->{status} == Ok;
 print "There are ", $move_counter->get_count, " possible initial moves.\n";
