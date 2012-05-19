@@ -63,6 +63,7 @@ sub init ($$) {
 						? str_to_location($loc)
 						: num_to_location($loc);
 				$self->set($loc, $color, $piece);
+				$self->cnv($loc) if convert_type->[$color][$piece];
 			}
 		}
 	}

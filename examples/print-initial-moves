@@ -14,7 +14,7 @@ use Games::Checkers::MoveConstants;
 use Games::Checkers::BoardTree;
 use Games::Checkers::BoardConstants;
 
-my $board = Games::Checkers::Board->new;
+my $board = Games::Checkers::Board->new($ENV{BOARD});
 my $color = White;
 
 if ($ENV{RANDOM_BOARD}) {
@@ -24,9 +24,9 @@ if ($ENV{RANDOM_BOARD}) {
 	for my $loc (0 .. 31) {
 		next if rand(4) > $rate;
 		my $color = rand(2) > 1 ? White : Black;
-		my $type  = rand(4) > 1 ? Pawn  : King;
-		$board->set($loc, $color, $type);
-		$board->cnv($loc) if convert_type->[$color][$type];
+		my $piece = rand(4) > 1 ? Pawn  : King;
+		$board->set($loc, $color, $piece);
+		$board->cnv($loc) if convert_type->[$color][$piece];
 	}
 }
 
