@@ -31,7 +31,7 @@ sub new ($%) {
 	$ENV{DUMB_CHARS} = 1 if $params{dumb_chars};
 
 	my $title = $params{title} || "Unknown White - Unknown Black";
-	my $board = Games::Checkers::Board->new;
+	my $board = Games::Checkers::Board->new($params{board});
 
 	# probe and use if available
 	my $frontend = !($params{use_term} || $ENV{USE_TERM}) && eval q{
@@ -40,7 +40,7 @@ sub new ($%) {
 	};
 
 	my $self = {
-		title => $params{title} || $title,
+		title => $title,
 		board => $board,
 		frontend => $frontend,
 		dumb_term => $params{dumb_term},

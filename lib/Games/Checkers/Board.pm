@@ -21,20 +21,63 @@ package Games::Checkers::Board;
 use Games::Checkers::BoardConstants;
 use Games::Checkers::Constants;
 use Games::Checkers::IteratorConstants;
+use Games::Checkers::LocationConversions;
+
+sub init ($$) {
+	my $self = shift;
+	my $board_or_locs = shift;
+
+	if (!$board_or_locs) {
+		vec($$self, 0, 32) = 0xFFF00FFF;
+		vec($$self, 1, 32) = 0xFFFF0000;
+		vec($$self, 2, 32) = 0x00000000;
+
+		return $self;
+	}
+
+	my $param_class = ref($board_or_locs);
+
+	# support Board param
+	if ($param_class && $param_class->isa('Games::Checkers::Board')) {
+		return $self->copy($board_or_locs);
+	}
+
+	# support "a1,a3/h6/h2/b8" or "/22,4,8/9" param
+	if (!$param_class) {
+		$board_or_locs = [ map { [ split ',' ] } split '/', $board_or_locs ];
+		$param_class = 'ARRAY';
+	}
+
+	die "Unsupported $board_or_locs param in Board::init\n"
+		unless $param_class eq 'ARRAY';
+
+	# support [ [], [ 22, 4, 8 ], [ 9 ] ] param
+	my @color_piece_locs = @$board_or_locs;
+	for my $color (White, Black) {
+		for my $piece (Pawn, King) {
+			my $locs = shift @color_piece_locs || [];
+			for my $loc (@$locs) {
+				$loc = ref($loc) eq 'ARRAY'
+					? arr_to_location($loc->[0], $loc->[1])
+					: $loc =~ /^\w/
+						? str_to_location($loc)
+						: num_to_location($loc);
+				$self->set($loc, $color, $piece);
+			}
+		}
+	}
+	return $self;
+}
 
 sub new ($;$) {
 	my $class = shift;
-	my $board = shift;
+	my $board_or_locs = shift;
 
 	my $data = '';
-	vec($data, 0, 32) = 0xFFF00FFF;
-	vec($data, 1, 32) = 0xFFFF0000;
-	vec($data, 2, 32) = 0x00000000;
-
 	my $self = \$data;
 	bless $self, $class;
-	$self->copy($board) if defined $board;
-	return $self;
+
+	return $self->init($board_or_locs);
 }
 
 sub get_size ($) {
@@ -105,10 +148,10 @@ sub cnv ($$) {
 
 sub set ($$$$) {
 	my $self = shift;
-	my ($loc, $color, $type) = @_;
+	my ($loc, $color, $piece) = @_;
 	vec($$self, 0, 32) |= (1 << $loc);
 	(vec($$self, 1, 32) &= ~(1 << $loc)) |= ((1 << $loc) * $color);
-	(vec($$self, 2, 32) &= ~(1 << $loc)) |= ((1 << $loc) * $type);
+	(vec($$self, 2, 32) &= ~(1 << $loc)) |= ((1 << $loc) * $piece);
 }
 
 

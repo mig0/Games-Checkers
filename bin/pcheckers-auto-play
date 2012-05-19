@@ -27,6 +27,7 @@ use Getopt::Long qw(:config no_ignore_case bundling);
 use Games::Checkers::Game;
 
 my $script_name = ($0 =~ m:([^/]+)$:, $1);
+my $board = undef;  # here the string, but could be Board too
 my $level = 3;
 my $pause = 1;
 my $random = 'none';  # '' means both, 'w' or 'b' - white or black only
@@ -45,6 +46,7 @@ sub show_help (;$) {
 
 		Options:
 			-h --help          show this help and exit
+			-b --board STR     init board with non-default setup, like "b4,d2/a3/h6"
 			-l --level N       strength level (default: $level)
 			-p --pause N       pause in seconds between the moves
 			-r --random [w|b]  perform random (not best) moves for both/white/black
@@ -62,6 +64,7 @@ sub show_help (;$) {
 
 GetOptions(
 	"h|help"        => sub { show_help(0) },
+	"b|board=s"     => \$board,
 	"l|level=s"     => \$level,
 	"p|pause=s"     => \$pause,
 	"r|random:s"    => \$random,
@@ -74,6 +77,7 @@ GetOptions(
 ) || show_help(1);
 
 my $game = Games::Checkers::Game->new(
+	board => $board,
 	title => join(' - ', ("Computer (lv $level)") x 2),
 	level => $level,
 	random => $random eq 'none' ? 0 : $random || 1,
