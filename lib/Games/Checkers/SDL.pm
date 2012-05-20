@@ -121,7 +121,7 @@ sub new ($$$%) {
 		},
 		w => $w,
 		h => $h,
-		move_str_y => 0,
+		move_msg_y => 0,
 		display => $display,
 		bg_surface => $bg_surface,
 		event => SDL::Event->new,
@@ -291,16 +291,22 @@ sub show_move ($$$$$) {
 	my $color = shift;
 	my $count = shift;
 
+	my $text = $self->{text};
+	my $display = $self->{display};
+
 	my $str = $move->dump;
+	my $n_str = int($count / 2 + 1) . '.';
 	my $x = 0;
 	if ($count % 2 == 0) {
 		$self->{move_msg_y} += 20;
-		$str = ($count / 2 + 1) . ". $str";
+		$str = "$n_str $str";
 	} else {
 		$x = 117;
 	}
 
-	$self->{text}->write_xy($self->{display}, 580 + $x, $self->{move_msg_y}, $str);
+	$text->write_xy($display, 580 +  0, $self->{move_msg_y} += 20, $n_str)
+		if !$self->{move_msg_y};
+	$text->write_xy($display, 580 + $x, $self->{move_msg_y}, $str);
 
 	$self->process_pending_events;
 }

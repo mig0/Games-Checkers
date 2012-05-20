@@ -32,6 +32,7 @@ sub new ($%) {
 
 	my $title = $params{title} || "Unknown White - Unknown Black";
 	my $board = Games::Checkers::Board->new($params{board});
+	my $color = $params{black} ? Black : $params{color} || White;
 
 	# probe and use if available
 	my $frontend = !($params{use_term} || $ENV{USE_TERM}) && eval q{
@@ -42,20 +43,24 @@ sub new ($%) {
 	my $self = {
 		title => $title,
 		board => $board,
+		color => $color,
 		frontend => $frontend,
 		dumb_term => $params{dumb_term},
 		level => $params{level} || 3,
 		random => $params{random} || 0,
 		max_move_num => $params{max_move_num} || 1000,
+		move_count => 0,
 	};
 
 	bless $self, $class;
 
-	$self->_init;
+	$self->init;
 }
 
-sub _init ($) {
+sub init ($) {
 	my $self = shift;
+
+	$self->{move_count} = $self->{color} == White ? 0 : 1;
 
 	if ($self->{frontend}) {
 		$self->{frontend}->init;
@@ -63,9 +68,6 @@ sub _init ($) {
 		$| = 1;
 		print "\e[2J" unless $self->{dumb_term};
 	}
-
-	$self->{move_count} = 0;
-	$self->{color} = White;
 
 	return $self;
 }
