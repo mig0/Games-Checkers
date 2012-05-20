@@ -22,7 +22,7 @@ use Games::Checkers::DeclareConstant {
 	NL => NL,      # no location
 	ML => NL + 1,  # multiple locations
 	DIRECTION_NUM => 4,
-	DEFAULT_LEVEL => 6,
+	DEFAULT_LEVEL => 3,
 };
 
 use Games::Checkers::DeclareConstant loc_directions => [

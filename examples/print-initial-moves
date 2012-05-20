@@ -15,7 +15,7 @@ use Games::Checkers::BoardTree;
 use Games::Checkers::BoardConstants;
 
 my $board = Games::Checkers::Board->new($ENV{BOARD});
-my $color = White;
+my $color = $ENV{BLACK} ? Black : White;
 
 my $move_counter = Games::Checkers::CountMoveList->new($board, $color);
 die "Internal problem" unless $move_counter->{status} == Ok;
@@ -29,6 +29,16 @@ my $expanded_nodes = $board_node->{sons};
 print $board_dump unless @$expanded_nodes;
 
 foreach (@$expanded_nodes) {
-	my $cost = $_->{board}->get_cost(Black);
-	print $_->{board}->dump($board_dump, "$cost " . $_->{move}->dump);
+	my $board = $_->{board};
+	my $cost = $board->get_cost($color = $color == White ? Black : White);
+	print $board->dump($board_dump, "$cost " . $_->{move}->dump);
+
+	if ($ENV{EXPAND}) {
+		my $board_tree = Games::Checkers::BoardTree->new($board, $color, $ENV{LEVEL});
+		my $move = $board_tree->choose_best_move;
+
+		$board->apply_move($move);
+		$cost = $board->get_cost($color = $color == White ? Black : White);
+		print $board->dump(3, "$cost " . $move->dump);
+	}
 }

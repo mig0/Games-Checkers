@@ -439,7 +439,7 @@ sub dump ($;$$$) {
 
 	# prepare prefix for each board line, if any
 	my $lines = () = $str =~ /\n/g;
-	$sprefix = "    " x $sprefix if $sprefix =~ /^\d+$/;
+	$sprefix = " " x ($size_2 / ($compact && 2.5 || 1) * $sprefix) if $sprefix =~ /^\d+$/;
 	my @cprefix = $cprefix ? $cprefix =~ /(\w\d[:-]\w\d|:\w\d|-\d{1,5}|\d{1,6})/g : ();
 	my $l = 0;
 	my @prefix = map {
