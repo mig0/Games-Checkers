@@ -50,6 +50,10 @@ sub new ($%) {
 		random => $params{random} || 0,
 		max_move_num => $params{max_move_num} || 1000,
 		move_count => 0,
+		initial => {
+			board => $board->clone,
+			color => $color,
+		},
 	};
 
 	bless $self, $class;
@@ -72,12 +76,38 @@ sub init ($) {
 	return $self;
 }
 
+sub restart ($) {
+	my $self = shift;
+
+	$self->{board} = $self->{initial}{board}->clone;
+	$self->{color} = $self->{initial}{color};
+
+	if ($self->{frontend}) {
+		$self->{frontend}->restart($self->{board});
+	}
+
+	$self->init;
+	$self->show_board;
+	$self->sleep(1);
+}
+
+sub call_frontend ($$@) {
+	my $self = shift;
+	my $method = shift || die;
+
+	my $rv = $self->{frontend}->$method(@_);
+
+	if ($rv == -1) {
+		$self->restart;
+	}
+}
+
 sub sleep ($$) {
 	my $self = shift;
 	my $secs = shift || 0;
 
 	if ($self->{frontend}) {
-		$self->{frontend}->sleep($secs);
+		$self->call_frontend('sleep', $secs);
 	} else {
 		sleep($secs);
 	}	
@@ -87,7 +117,7 @@ sub show_board ($) {
 	my $self = shift;
 
 	if ($self->{frontend}) {
-		$self->{frontend}->show_board;
+		$self->call_frontend('show_board');
 	} else {
 		my $title = $self->{title};
 		my $indent = int((37 - length($title)) / 2);
@@ -150,7 +180,7 @@ sub show_move ($$) {
 	} qw(board color move_count);
 
 	if ($self->{frontend}) {
-		$self->{frontend}->show_move($move, $color, $move_count);
+		$self->call_frontend('show_move', $move, $color, $move_count);
 	} else {
 		printf "  %02d. %s", 1 + $move_count / 2, $color == White ? "" : "... ";
 		print $move->dump, "                           \n";
@@ -171,7 +201,7 @@ sub show_result ($;$) {
 	);
 
 	if ($self->{frontend}) {
-		$self->{frontend}->show_result($message);
+		$self->call_frontend('show_result', $message);
 	} else {
 		print "\n$message\e[0K\n";
 	}

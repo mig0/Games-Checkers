@@ -154,6 +154,14 @@ sub init ($) {
 	return $self;
 }
 
+sub restart ($$) {
+	my $self = shift;
+	my $board = shift;
+
+	$self->{move_msg_y} = 0;
+	$self->{board} = $board;
+}
+
 sub quit ($) {
 	exit(0);
 }
@@ -215,6 +223,12 @@ sub process_pending_events ($) {
 			if $self->{paused}
 			&& ($event->type == SDL_KEYDOWN || $event->type == SDL_MOUSEBUTTONDOWN);
 
+		return -1
+			if $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_r
+			|| $event->type == SDL_MOUSEBUTTONDOWN
+			&& abs($event->motion_x - $self->{w} + 62) <= 10
+			&& abs($event->motion_y -              14) <= 10;
+
 		$self->{mouse_pressed} = $event->type == SDL_MOUSEBUTTONDOWN
 			if $event->button_button == SDL_BUTTON_LEFT;
 
@@ -225,10 +239,13 @@ sub process_pending_events ($) {
 
 		$self->pause
 			if $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_p
-			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_SPACE;
+			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_SPACE
+			|| $event->type == SDL_MOUSEBUTTONDOWN
+			&& abs($event->motion_x - $self->{w} + 38) <= 10
+			&& abs($event->motion_y -              14) <= 10;
 	}
 
-	return 1;
+	return 0;
 }
 
 sub sleep ($$) {
@@ -236,9 +253,11 @@ sub sleep ($$) {
 	my $fsecs = (shift || 0) * 50;
 
 	do {
-		$self->process_pending_events;
+		return -1 if $self->process_pending_events == -1;
 		select(undef, undef, undef, 0.02) if $fsecs--;
 	} while $fsecs >= 0;
+
+	return 0;
 }
 
 sub show_board ($) {
