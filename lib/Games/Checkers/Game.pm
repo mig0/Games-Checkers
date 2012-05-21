@@ -91,6 +91,16 @@ sub restart ($) {
 	$self->sleep(1);
 }
 
+sub quit ($) {
+	my $self = shift;
+
+	if ($self->{frontend}) {
+		$self->{frontend}->quit or return;
+	}
+
+	exit(0);
+}
+
 sub call_frontend ($$@) {
 	my $self = shift;
 	my $method = shift || die;
@@ -99,6 +109,9 @@ sub call_frontend ($$@) {
 
 	if ($rv == -1) {
 		$self->restart;
+	}
+	if ($rv == -2) {
+		$self->quit;
 	}
 }
 

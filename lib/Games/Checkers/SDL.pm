@@ -163,7 +163,7 @@ sub restart ($$) {
 }
 
 sub quit ($) {
-	exit(0);
+	return 1;
 }
 
 sub pause ($) {
@@ -232,7 +232,7 @@ sub process_pending_events ($) {
 		$self->{mouse_pressed} = $event->type == SDL_MOUSEBUTTONDOWN
 			if $event->button_button == SDL_BUTTON_LEFT;
 
-		$self->quit
+		return -2
 			if $event->type == SDL_QUIT
 			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE
 			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_q;
@@ -253,7 +253,8 @@ sub sleep ($$) {
 	my $fsecs = (shift || 0) * 50;
 
 	do {
-		return -1 if $self->process_pending_events == -1;
+		my $rv = $self->process_pending_events;
+		return $rv if $rv < 0;
 		select(undef, undef, undef, 0.02) if $fsecs--;
 	} while $fsecs >= 0;
 
