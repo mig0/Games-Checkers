@@ -33,12 +33,14 @@ use SDLx::Text;
 
 sub fill_rect_tiled ($$$) {
 	my $surface = shift || die;
-	my $rect = shift || die;
+	my $rect = shift;
 	my $tile = shift || die;
 
-	my ($x0, $y0, $w0, $h0) = ref($rect) eq 'ARRAY'
-		? @$rect
-		: ($rect->x, $rect->y, $rect->w, $rect->h);
+	my ($x0, $y0, $w0, $h0) = !$rect
+		? (0, 0, $surface->w, $surface->h)
+		: ref($rect) eq 'ARRAY'
+			? @$rect
+			: ($rect->x, $rect->y, $rect->w, $rect->h);
 	my $w = $tile->w;
 	my $h = $tile->h;
 
@@ -73,12 +75,16 @@ sub new ($$$%) {
 
 	SDL::Video::wm_set_caption("Checkers: $title", "Checkers");
 
-	fill_rect_tiled($display, SDL::Rect->new(0, 0, $w, $h), SDL::Image::load("$image_dir/bg-tile.jpg"));
+	my $bg = SDL::Surface->new(SDL_HWSURFACE | SDL_PHYSPAL, $w, $h);
 
-	SDL::Video::fill_rect($display, SDL::Rect->new(41, 41, 64 * $size + 6, 64 * $size + 6), 0x50d050);
-	SDL::Video::fill_rect($display, SDL::Rect->new(43, 43, 64 * $size + 2, 64 * $size + 2), 0x202020);
-	SDL::Video::fill_rect($display, SDL::Rect->new($w - 25, 4, 21, 21), 0xe0e0e0);
-	SDL::Video::fill_rect($display, SDL::Rect->new($w - 23, 6, 17, 17), 0x707070);
+	fill_rect_tiled($bg, 0, SDL::Image::load("$image_dir/bg-tile.jpg"));
+
+	SDL::Video::fill_rect($bg, SDL::Rect->new(41, 41, 64 * $size + 6, 64 * $size + 6), 0x50d050ff);
+	SDL::Video::fill_rect($bg, SDL::Rect->new(43, 43, 64 * $size + 2, 64 * $size + 2), 0x202020ff);
+	SDL::Video::fill_rect($bg, SDL::Rect->new($w - 25, 4, 21, 21), 0xe0e0e0);
+	SDL::Video::fill_rect($bg, SDL::Rect->new($w - 23, 6, 17, 17), 0x707070);
+
+	SDL::Video::blit_surface($bg, 0, $display, 0);
 
 	my $title_text = SDLx::Text->new(
 		size    => 24,
@@ -101,14 +107,24 @@ sub new ($$$%) {
 	$coord_text->write_xy($display, 28, 66 + 64 * ($size - $_), $_) for 1 .. $size;
 	$coord_text->write_xy($display, 77 + 64 * $_, $h - 40, chr(ord('a') + $_)) for 0 .. $size-1;
 
-	my $bg_surface = SDL::Surface->new(0, 64 * $size, 64 * $size);
+	my @cells = (
+		SDL::Image::load("$image_dir/cell-white.png"),
+		SDL::Image::load("$image_dir/cell-black.png"),
+	);
+
+	for my $x (0 .. $size - 1) {
+		for my $y (0 .. $size - 1) {
+			SDL::Video::blit_surface(
+				$cells[($x + $y) % 2],
+				0,
+				$bg,
+				SDL::Rect->new(44 + 64 * $x, 44 + 64 * $y, 64, 64)
+			);
+		}
+	}
 
 	my $self = {
 		board => $board,
-		cells => [
-			SDL::Image::load("$image_dir/cell-white.png"),
-			SDL::Image::load("$image_dir/cell-black.png"),
-		],
 		pieces => {
 			&Pawn => {
 				&White => SDL::Image::load("$image_dir/pawn-white.png"),
@@ -123,7 +139,7 @@ sub new ($$$%) {
 		h => $h,
 		move_msg_y => 0,
 		display => $display,
-		bg_surface => $bg_surface,
+		bg => $bg,
 		event => SDL::Event->new,
 		text => SDLx::Text->new(shadow => 1, shadow_offset => 2, size => 20),
 		mouse_pressed => 0,
@@ -139,17 +155,6 @@ sub init ($) {
 	my $self = shift;
 
 	my $size = $self->{board}->get_size;
-
-	for my $x (0 .. $size - 1) {
-		for my $y (0 .. $size - 1) {
-			SDL::Video::blit_surface(
-				$self->{cells}[($x + $y) % 2],
-				0,
-				$self->{bg_surface},
-				SDL::Rect->new(64 * $x, 64 * $y, 64, 64)
-			);
-		}
-	}
 
 	return $self;
 }
@@ -264,29 +269,13 @@ sub sleep ($$) {
 sub show_board ($) {
 	my $self = shift;
 
+	my $display = $self->{display};
 	my $board = $self->{board};
 	my $size = $board->get_size;
 
 	# draw empty board first
-if (0) {
-	SDL::Video::blit_surface(
-		$self->{bg_surface},
-		0,
-		$self->{display},
-		SDL::Rect->new(44, 44, 64 * $size, 64 * $size),
-	);
-} else {
-	for my $x (0 .. $size - 1) {
-		for my $y (0 .. $size - 1) {
-			SDL::Video::blit_surface(
-				$self->{cells}[($x + $y) % 2],
-				0,
-				$self->{display},
-				SDL::Rect->new(44 + 64 * $x, 44 + 64 * $y, 64, 64)
-			);
-		}
-	}
-}
+	my $cells_rect = SDL::Rect->new(44, 44, 64 * $size, 64 * $size);
+	SDL::Video::blit_surface($self->{bg}, $cells_rect, $display, $cells_rect);
 
 	for my $color (White, Black) {
 		my $iterator = Games::Checkers::FigureIterator->new($board, $color);
@@ -294,10 +283,8 @@ if (0) {
 			my $piece = $board->piece($location);
 			my ($x, $y) = location_to_arr($location);
 			SDL::Video::blit_surface(
-				$self->{pieces}{$piece}{$color},
-				0,
-				$self->{display},
-				SDL::Rect->new(52 + 64 * ($x - 1), 52 + 64 * ($size - $y), 48, 48)
+				$self->{pieces}{$piece}{$color}, 0,
+				$display, SDL::Rect->new(52 + 64 * ($x - 1), 52 + 64 * ($size - $y), 48, 48)
 			);
 		}
 	}
