@@ -31,16 +31,28 @@ use SDL::Video;
 use SDL::Image;
 use SDLx::Text;
 
+sub rect_to_xywh ($;$) {
+	my $surface = shift || die;
+	my $rect = shift;
+
+	return (0, 0, $surface->w, $surface->h)
+		unless $rect;
+
+	$rect = [ $rect->x, $rect->y, $rect->w, $rect->h ]
+		unless ref($rect) eq 'ARRAY';
+
+	$rect->[2] ||= $surface->w - $rect->[0];
+	$rect->[3] ||= $surface->h - $rect->[1];
+
+	return @$rect;
+}
+
 sub fill_rect_tiled ($$$) {
 	my $surface = shift || die;
 	my $rect = shift;
 	my $tile = shift || die;
 
-	my ($x0, $y0, $w0, $h0) = !$rect
-		? (0, 0, $surface->w, $surface->h)
-		: ref($rect) eq 'ARRAY'
-			? @$rect
-			: ($rect->x, $rect->y, $rect->w, $rect->h);
+	my ($x0, $y0, $w0, $h0) = rect_to_xywh($surface, $rect);
 	my $w = $tile->w;
 	my $h = $tile->h;
 
@@ -81,8 +93,11 @@ sub new ($$$%) {
 
 	SDL::Video::fill_rect($bg, SDL::Rect->new(41, 41, 64 * $size + 6, 64 * $size + 6), 0x50d050ff);
 	SDL::Video::fill_rect($bg, SDL::Rect->new(43, 43, 64 * $size + 2, 64 * $size + 2), 0x202020ff);
-	SDL::Video::fill_rect($bg, SDL::Rect->new($w - 25, 4, 21, 21), 0xe0e0e0);
-	SDL::Video::fill_rect($bg, SDL::Rect->new($w - 23, 6, 17, 17), 0x707070);
+	SDL::Video::fill_rect($bg, SDL::Rect->new($w - 18, 2, 16, 16), 0xe0e0e0);
+	SDL::Video::fill_rect($bg, SDL::Rect->new($w - 16, 4, 12, 12), 0x707070);
+	SDL::Video::fill_rect($bg, SDL::Rect->new($w - 34, 6,  8,  8), 0xf0f0f0);
+	SDL::Video::fill_rect($bg, SDL::Rect->new($w - 58, 2, 16, 16), 0xc0c0c0);
+	SDL::Video::fill_rect($bg, SDL::Rect->new($w - 55, 5, 10, 10), 0xa0a0a0);
 
 	SDL::Video::blit_surface($bg, 0, $display, 0);
 
@@ -159,12 +174,25 @@ sub init ($) {
 	return $self;
 }
 
+sub blit_bg ($;$) {
+	my $self = shift;
+	my $rect = shift;
+
+	my $display = $self->{display};
+
+	my ($x, $y, $w, $h) = rect_to_xywh($display, $rect);
+	$rect = SDL::Rect->new($x, $y, $w, $h);
+	SDL::Video::blit_surface($self->{bg}, $rect, $display, $rect);
+}
+
 sub restart ($$) {
 	my $self = shift;
 	my $board = shift;
 
 	$self->{move_msg_y} = 0;
 	$self->{board} = $board;
+
+	$self->blit_bg([580, 20]);
 }
 
 sub quit ($) {
@@ -215,14 +243,16 @@ sub process_pending_events ($) {
 
 	SDL::Events::pump_events();
 	while (SDL::Events::poll_event($event)) {
+		my $pressed_button = $event->type == SDL_MOUSEBUTTONDOWN
+			&& $event->motion_y < 20 && $event->motion_x >= $self->{w} - 20 * 3
+			? 1 + int(($self->{w} - $event->motion_x) / 20) : 0;
+
 		$self->toggle_fullscreen, next
 			if $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_RETURN
 			&& $event->key_mod & KMOD_ALT
 			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_F11
 			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_f
-			|| $event->type == SDL_MOUSEBUTTONDOWN
-			&& abs($event->motion_x - $self->{w} + 14) <= 10
-			&& abs($event->motion_y -              14) <= 10;
+			|| $pressed_button == 1;
 
 		return 2
 			if $self->{paused}
@@ -230,9 +260,7 @@ sub process_pending_events ($) {
 
 		return -1
 			if $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_r
-			|| $event->type == SDL_MOUSEBUTTONDOWN
-			&& abs($event->motion_x - $self->{w} + 62) <= 10
-			&& abs($event->motion_y -              14) <= 10;
+			|| $pressed_button == 3;
 
 		$self->{mouse_pressed} = $event->type == SDL_MOUSEBUTTONDOWN
 			if $event->button_button == SDL_BUTTON_LEFT;
@@ -245,9 +273,7 @@ sub process_pending_events ($) {
 		$self->pause
 			if $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_p
 			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_SPACE
-			|| $event->type == SDL_MOUSEBUTTONDOWN
-			&& abs($event->motion_x - $self->{w} + 38) <= 10
-			&& abs($event->motion_y -              14) <= 10;
+			|| $pressed_button == 2;
 	}
 
 	return 0;
@@ -274,8 +300,7 @@ sub show_board ($) {
 	my $size = $board->get_size;
 
 	# draw empty board first
-	my $cells_rect = SDL::Rect->new(44, 44, 64 * $size, 64 * $size);
-	SDL::Video::blit_surface($self->{bg}, $cells_rect, $display, $cells_rect);
+	$self->blit_bg([ 44, 44, 64 * $size, 64 * $size ]);
 
 	for my $color (White, Black) {
 		my $iterator = Games::Checkers::FigureIterator->new($board, $color);
