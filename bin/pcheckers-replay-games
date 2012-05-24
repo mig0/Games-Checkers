@@ -28,7 +28,7 @@ use Games::Checkers::PDNParser;
 use Games::Checkers::Game;
 
 my $script_name = ($0 =~ m:([^/]+)$:, $1);
-my $pause = 1;
+my $delay = 1;
 my $break = 10;
 my $game_start = 1;
 my $use_term = 0;  # 0 means detect automatically
@@ -45,8 +45,8 @@ sub show_help (;$) {
 
 		Options:
 			-h --help          show this help and exit
-			-p --pause N       pause in seconds between the moves ($pause sec)
-			-b --break N       pause in seconds between the games ($break sec)
+			-d --delay N       pause in seconds between the moves (default: $delay)
+			-b --break N       pause in seconds between the games (default: $break)
 			-s --start N       skip N-1 games, start with N's game
 			-t --use-term      use terminal even if graphical frontend is available
 			-T --dumb-term     do not position terminal cursor
@@ -60,7 +60,7 @@ sub show_help (;$) {
 
 GetOptions(
 	"h|help"        => sub { show_help(0) },
-	"p|pause=i"     => \$pause,
+	"d|delay=i"     => \$delay,
 	"b|break=i"     => \$break,
 	"s|start=i"     => \$game_start,
 	"t|use-term!"   => \$use_term,
@@ -108,7 +108,7 @@ while (my $pdn_record = $pdn_parser->next_record) {
 	$game->show_board;
 
 	while (@$move_verge_trios) {
-		$game->sleep($pause);
+		$game->sleep($delay);
 
 		my $move_verge_trio = shift @$move_verge_trios;
 		my ($is_beat, $src, $dst) = @$move_verge_trio;

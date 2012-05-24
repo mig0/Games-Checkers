@@ -30,7 +30,7 @@ my $script_name = ($0 =~ m:([^/]+)$:, $1);
 my $board = undef;  # here the string, but could be Board too
 my $black = 0;
 my $level = 3;
-my $pause = 1;
+my $delay = 1;
 my $random = 'none';  # '' means both, 'w' or 'b' - white or black only
 my $use_term = 0;  # 0 means detect automatically
 my $dumb_term = 0;
@@ -50,7 +50,7 @@ sub show_help (;$) {
 			-b --board STR     init board with non-default setup, like "b4,d2/a3/h6"
 			-B --black         start game with the Black pieces, not White
 			-l --level N       strength level (default: $level)
-			-p --pause N       pause in seconds between the moves
+			-d --delay N       pause in seconds between the moves (default: $delay)
 			-r --random [w|b]  perform random (not best) moves for both/white/black
 			-t --use-term      use terminal even if graphical frontend is available
 			-T --dumb-term     do not position terminal cursor
@@ -69,7 +69,7 @@ GetOptions(
 	"b|board=s"     => \$board,
 	"B|black"       => \$black,
 	"l|level=s"     => \$level,
-	"p|pause=s"     => \$pause,
+	"d|delay=s"     => \$delay,
 	"r|random:s"    => \$random,
 	"t|use-term!"   => \$use_term,
 	"T|dumb-term!"  => \$dumb_term,
@@ -96,7 +96,7 @@ $game->show_board;
 
 my $num_moves = 0;
 while ($game->can_move) {
-	$game->sleep($pause);
+	$game->sleep($delay);
 	last if $game->is_max_move_num_reached;
 	$game->show_move($game->choose_move);
 	$game->show_board;
