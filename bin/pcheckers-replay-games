@@ -60,8 +60,8 @@ sub show_help (;$) {
 
 GetOptions(
 	"h|help"        => sub { show_help(0) },
-	"d|delay=i"     => \$delay,
-	"b|break=i"     => \$break,
+	"d|delay=s"     => \$delay,
+	"b|break=s"     => \$break,
 	"s|start=i"     => \$game_start,
 	"t|use-term!"   => \$use_term,
 	"T|dumb-term!"  => \$dumb_term,

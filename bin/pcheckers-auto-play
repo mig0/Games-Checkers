@@ -68,7 +68,7 @@ GetOptions(
 	"h|help"        => sub { show_help(0) },
 	"b|board=s"     => \$board,
 	"B|black"       => \$black,
-	"l|level=s"     => \$level,
+	"l|level=i"     => \$level,
 	"d|delay=s"     => \$delay,
 	"r|random:s"    => \$random,
 	"t|use-term!"   => \$use_term,
