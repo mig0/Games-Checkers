@@ -122,6 +122,5 @@ while (my $pdn_record = $pdn_parser->next_record) {
 	}
 
 	my $result = $values->{Result} || "";
-	$game->show_result($result_string{$result} || "Unknown result ($result)");
-	$game->sleep($break);
+	$game->show_result($result_string{$result} || "Unknown result ($result)", $break);
 }

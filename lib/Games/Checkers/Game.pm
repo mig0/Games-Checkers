@@ -126,6 +126,17 @@ sub sleep ($$) {
 	}	
 }
 
+sub hold ($;$) {
+	my $self = shift;
+	my $break = shift;
+
+	if ($self->{frontend}) {
+		$self->call_frontend('hold', $break);
+	} else {
+		$self->sleep($break) if $break;
+	}
+}
+
 sub show_board ($) {
 	my $self = shift;
 
@@ -205,19 +216,22 @@ sub show_move ($$) {
 	$self->{move_count}++;
 }
 
-sub show_result ($;$) {
+sub show_result ($;$$) {
 	my $self = shift;
 	my $message = shift || ($self->is_max_move_num_reached
 		? "Automatic draw after $self->{max_move_num} moves."
 		: (($self->{color} == White xor $Games::Checkers::give_away)
 			? "Black" : "White") . " won."
 	);
+	my $break = shift;
 
 	if ($self->{frontend}) {
 		$self->call_frontend('show_result', $message);
 	} else {
 		print "\n$message\e[0K\n";
 	}
+
+	$self->hold($break);
 }
 
 1;

@@ -158,6 +158,7 @@ sub new ($$$%) {
 		event => SDL::Event->new,
 		text => SDLx::Text->new(shadow => 1, shadow_offset => 2, size => 20),
 		mouse_pressed => 0,
+		skip_unpress => 0,
 		fullscreen => $fullscreen,
 	};
 
@@ -219,7 +220,7 @@ sub pause ($) {
 		text    => 'PAUSED',
 	)->write_to($display);
 
-	while ($self->process_pending_events != 2) {
+	while ($self->process_pending_events != 1) {
 		select(undef, undef, undef, 0.1);
 	}
 
@@ -234,29 +235,43 @@ sub toggle_fullscreen ($) {
 	SDL::Video::wm_toggle_fullscreen($self->{display});
 }
 
-sub process_pending_events ($) {
+sub update_display ($) {
 	my $self = shift;
 
 	SDL::Video::update_rect($self->{display}, 0, 0, 0, 0);
+}
+
+sub process_pending_events ($;$) {
+	my $self = shift;
+	my $want_unpress = shift;
+
+	$self->update_display;
 
 	my $event = $self->{event};
 
 	SDL::Events::pump_events();
 	while (SDL::Events::poll_event($event)) {
+		$self->{skip_unpress} = 0, next
+			if $self->{skip_unpress} == SDL_KEYDOWN         && $event->type == SDL_KEYUP
+			|| $self->{skip_unpress} == SDL_MOUSEBUTTONDOWN && $event->type == SDL_MOUSEBUTTONUP;
+
 		my $pressed_button = $event->type == SDL_MOUSEBUTTONDOWN
 			&& $event->motion_y < 20 && $event->motion_x >= $self->{w} - 20 * 3
 			? 1 + int(($self->{w} - $event->motion_x) / 20) : 0;
 
-		$self->toggle_fullscreen, next
+		$self->toggle_fullscreen, $self->{skip_unpress} = $event->type, next
 			if $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_RETURN
 			&& $event->key_mod & KMOD_ALT
 			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_F11
 			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_f
 			|| $pressed_button == 1;
 
-		return 2
-			if $self->{paused}
-			&& ($event->type == SDL_KEYDOWN || $event->type == SDL_MOUSEBUTTONDOWN);
+		return 1
+			if ($self->{paused} || $want_unpress)
+			&& ($event->type == SDL_KEYUP || $event->type == SDL_MOUSEBUTTONUP);
+
+		next
+			if $self->{paused};
 
 		return -1
 			if $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_r
@@ -270,7 +285,7 @@ sub process_pending_events ($) {
 			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_ESCAPE
 			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_q;
 
-		$self->pause
+		$self->{skip_unpress} = $event->type, return $self->pause
 			if $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_p
 			|| $event->type == SDL_KEYDOWN && $event->key_sym == SDLK_SPACE
 			|| $pressed_button == 2;
@@ -288,6 +303,19 @@ sub sleep ($$) {
 		return $rv if $rv < 0;
 		select(undef, undef, undef, 0.02) if $fsecs--;
 	} while $fsecs >= 0;
+
+	return 0;
+}
+
+sub hold ($) {
+	my $self = shift;
+
+	while (SDL::Events::wait_event) {
+		my $rv = $self->process_pending_events("want_unpress");
+		return $rv if $rv == -2;
+		last if $rv == 1;
+		$self->update_display;
+	}
 
 	return 0;
 }
@@ -351,7 +379,8 @@ sub show_result ($$) {
 	$text->h_align('center');
 	$text->color([220, 220, 150]);
 	$text->write_xy($self->{display}, ($self->{w} + 540) / 2, 0, $message);
-	$self->sleep(6);
+
+	$self->process_pending_events;
 }
 
 1;
