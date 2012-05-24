@@ -1,0 +1,18 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+
+use Games::Checkers::Game;
+
+my $board = Games::Checkers::Board->new($ENV{BOARD});
+my $game = Games::Checkers::Game->new(
+	board => $board,
+	title => "Cost: " . $board->get_cost($ENV{BLACK} || 0),
+);
+
+$game->show_board;
+$game->hold;
