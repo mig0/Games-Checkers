@@ -58,6 +58,8 @@ sub new ($%) {
 
 	bless $self, $class;
 
+	$self->edit_board if $params{edit_board};
+
 	$self->init;
 }
 
@@ -232,6 +234,18 @@ sub show_result ($;$$) {
 	}
 
 	$self->hold($break);
+}
+
+sub edit_board ($) {
+	my $self = shift;
+
+	my $board = $self->{board};
+
+	if ($self->{frontend}) {
+		$self->{frontend}->edit_board($board);
+	}
+
+	$self->{initial}{board}->copy($board);
 }
 
 1;

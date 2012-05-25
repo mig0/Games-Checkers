@@ -47,7 +47,7 @@ sub init ($$) {
 		my @l;
 		if ($board_or_locs eq 'random') {
 			push @{$l[4 * rand() ** 2] ||= []}, $_ for grep { rand(2) > 1 } 1 .. 32;
-		} else {
+		} elsif ($board_or_locs ne 'empty') {
 			@l = map { [ split ',' ] } split '/', $board_or_locs;
 		}
 		$board_or_locs = \@l;
@@ -162,6 +162,14 @@ sub set ($$$$) {
 	(vec($$self, 2, 32) &= ~(1 << $loc)) |= ((1 << $loc) * $piece);
 }
 
+sub chk ($$$$) {
+	my $self = shift;
+	my ($loc, $color, $piece) = @_;
+	return
+		$self->occup($loc) &&
+		$self->color($loc) == $color &&
+		$self->piece($loc) == $piece ? 1 : 0;
+}
 
 sub get_cost ($$) {
 	my $self = shift;

@@ -21,6 +21,7 @@ package Games::Checkers::SDL;
 use Games::Checkers::Constants;
 use Games::Checkers::Iterators;
 use Games::Checkers::LocationConversions;
+use Games::Checkers::Board;
 
 use SDL;
 use SDL::Event;
@@ -99,28 +100,16 @@ sub new ($$$%) {
 	SDL::Video::fill_rect($bg, SDL::Rect->new($w - 58, 2, 16, 16), 0xc0c0c0);
 	SDL::Video::fill_rect($bg, SDL::Rect->new($w - 55, 5, 10, 10), 0xa0a0a0);
 
-	SDL::Video::blit_surface($bg, 0, $display, 0);
-
-	my $title_text = SDLx::Text->new(
-		size    => 24,
-		color   => 0xffffdc,
-		bold    => 1,
-		shadow  => 1,
-		x       => 44 + 64 * $size / 2,
-		y       => 6,
-		h_align => 'center',
-		text    => $title,
-	);
-	$title_text->write_to($display);
-
 	my $coord_text = SDLx::Text->new(
 		size    => 20,
 		color   => 0xd8d8d0,
 		shadow  => 1,
 		h_align => 'center',
 	);
-	$coord_text->write_xy($display, 28, 66 + 64 * ($size - $_), $_) for 1 .. $size;
-	$coord_text->write_xy($display, 77 + 64 * $_, $h - 40, chr(ord('a') + $_)) for 0 .. $size-1;
+	$coord_text->write_xy($bg, 28, 66 + 64 * ($size - $_), $_) for 1 .. $size;
+	$coord_text->write_xy($bg, 77 + 64 * $_, $h - 40, chr(ord('a') + $_)) for 0 .. $size-1;
+
+	SDL::Video::blit_surface($bg, 0, $display, 0);
 
 	my @cells = (
 		SDL::Image::load("$image_dir/cell-white.png"),
@@ -140,6 +129,7 @@ sub new ($$$%) {
 
 	my $self = {
 		board => $board,
+		title => $title,
 		pieces => {
 			&Pawn => {
 				&White => SDL::Image::load("$image_dir/pawn-white.png"),
@@ -170,7 +160,7 @@ sub new ($$$%) {
 sub init ($) {
 	my $self = shift;
 
-	my $size = $self->{board}->get_size;
+	$self->show_title;
 
 	return $self;
 }
@@ -186,6 +176,34 @@ sub blit_bg ($;$) {
 	SDL::Video::blit_surface($self->{bg}, $rect, $display, $rect);
 }
 
+sub show_title ($;$) {
+	my $self = shift;
+	my $title = shift || $self->{title};
+
+	my $size = $self->{board}->get_size;
+	my $display = $self->{display};
+
+	$self->blit_bg([ 0, 6, 2 * 44 + 64 * $size, 30 ]);
+
+	my $title_text = SDLx::Text->new(
+		size    => 24,
+		color   => 0xffffdc,
+		bold    => 1,
+		shadow  => 1,
+		x       => 44 + 64 * $size / 2,
+		y       => 6,
+		h_align => 'center',
+		text    => $title,
+	);
+	$title_text->write_to($display);
+}
+
+sub clear_helper ($) {
+	my $self = shift;
+
+	$self->blit_bg([580, 20]);
+}
+
 sub restart ($$) {
 	my $self = shift;
 	my $board = shift;
@@ -193,7 +211,7 @@ sub restart ($$) {
 	$self->{move_msg_y} = 0;
 	$self->{board} = $board;
 
-	$self->blit_bg([580, 20]);
+	$self->clear_helper;
 }
 
 sub quit ($) {
@@ -307,17 +325,70 @@ sub sleep ($$) {
 	return 0;
 }
 
-sub hold ($) {
+sub wait ($;$) {
 	my $self = shift;
 
 	while (SDL::Events::wait_event) {
 		my $rv = $self->process_pending_events("want_unpress");
-		return $rv if $rv == -2;
+		return $rv if $rv < 0;
 		last if $rv == 1;
 		$self->update_display;
 	}
 
 	return 0;
+}
+
+use constant QUIT_PRESSED      => -2;
+use constant RESTART_PRESSED   => -1;
+use constant MISC_PRESSED      => 0;
+use constant RECT_PRESSED      => 1;
+use constant BOARD_LOC_PRESSED => 2;
+
+sub wait_for_press ($;$) {
+	my $self = shift;
+	my $rects = shift || [];
+
+	my $rv = $self->wait;
+	return $rv if $rv < 0;
+
+	my $event = $self->{event};
+	goto RETURN unless $event->type == SDL_MOUSEBUTTONUP;
+
+	my $mouse_x = $event->motion_x;
+	my $mouse_y = $event->motion_y;
+
+	# check rectangles
+	for my $i (0 .. @$rects - 1) {
+		my ($x, $y, $w, $h) = rect_to_xywh($self->{display}, $rects->[$i]);
+		return (RECT_PRESSED, $i)
+			if $mouse_x >= $x && $mouse_x < $x + $w
+			&& $mouse_y >= $y && $mouse_y < $y + $h;
+	}
+
+	# check board locations
+	my $size = $self->{board}->get_size;
+	$mouse_x -= 44;
+	$mouse_y -= 44;
+	if (
+		$mouse_x >= 0 && $mouse_x < $size * 64 &&
+		$mouse_y >= 0 && $mouse_y < $size * 64
+	) {
+		my $x = 1 + int($mouse_x / 64);
+		my $y = 8 - int($mouse_y / 64);
+		return (BOARD_LOC_PRESSED, arr_to_location($x, $y), $event->button_button == SDL_BUTTON_RIGHT)
+			if ($x + $y) % 2 == 0;
+	}
+
+RETURN:
+	return MISC_PRESSED;
+}
+
+sub hold ($) {
+	my $self = shift;
+
+	my $rv = $self->wait;
+
+	return $rv == QUIT_PRESSED ? QUIT_PRESSED : MISC_PRESSED;
 }
 
 sub show_board ($) {
@@ -381,6 +452,75 @@ sub show_result ($$) {
 	$text->write_xy($self->{display}, ($self->{w} + 540) / 2, 0, $message);
 
 	$self->process_pending_events;
+}
+
+sub edit_board ($;$) {
+	my $self = shift;
+	my $board = shift || $self->{board};
+
+	my $orig_board = $board->clone;
+	my $display = $self->{display};
+
+	my @rects = (
+		[ 580 +  20, 200, 64, 64 ],
+		[ 580 + 120, 200, 64, 64 ],
+		[ 580 +  20, 300, 64, 64 ],
+		[ 580 + 120, 300, 64, 64 ],
+	);
+	my @cp = (
+		[ White, Pawn ],
+		[ Black, Pawn ],
+		[ White, King ],
+		[ Black, King ],
+	);
+
+	my $current = 0;
+
+	$self->show_title("Edit Board");
+
+	while (1) {
+		for my $i (0 .. 3) {
+			my $rect = $rects[$i];
+			if ($i == $current) {
+				SDL::Video::blit_surface(
+					$self->{bg}, SDL::Rect->new(44, 44 + 64, 64, 64),
+					$display, SDL::Rect->new(@$rect),
+				);
+			} else {
+				$self->blit_bg($rect);
+			}
+			my $piece_rect = SDL::Rect->new($rect->[0] + 8, $rect->[1] + 8, 48, 48);
+			my ($color, $piece) = @{$cp[$i]};
+			SDL::Video::blit_surface(
+				$self->{pieces}{$piece}{$color}, 0,
+				$display, $piece_rect,
+			);
+		}
+
+		$self->show_board;
+		my ($rv, $which, $is_second) = $self->wait_for_press(\@rects);
+
+		if ($rv == QUIT_PRESSED) {
+#			$board->copy($orig_board);
+			last;
+		}
+		if ($rv == RESTART_PRESSED) {
+			$board->copy($orig_board);
+		}
+		if ($rv == BOARD_LOC_PRESSED) {
+			my $loc = $which;
+			$is_second || $board->chk($loc, @{$cp[$current]})
+				? $board->clr($loc)
+				: $board->set($loc, @{$cp[$current]});
+		}
+		if ($rv == RECT_PRESSED) {
+			$current = $which;
+		}
+	}
+
+	$self->clear_helper;
+
+	return $board;
 }
 
 1;
