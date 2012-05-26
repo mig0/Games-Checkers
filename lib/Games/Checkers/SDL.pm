@@ -343,6 +343,7 @@ use constant RESTART_PRESSED   => -1;
 use constant MISC_PRESSED      => 0;
 use constant RECT_PRESSED      => 1;
 use constant BOARD_LOC_PRESSED => 2;
+use constant KEY_PRESSED       => 3;
 
 sub wait_for_press ($;$) {
 	my $self = shift;
@@ -352,7 +353,12 @@ sub wait_for_press ($;$) {
 	return $rv if $rv < 0;
 
 	my $event = $self->{event};
-	goto RETURN unless $event->type == SDL_MOUSEBUTTONUP;
+
+	if ($event->type == SDL_KEYUP) {
+		return (KEY_PRESSED, $event->key_sym);
+	}
+
+	die "Internal bug..." unless $event->type == SDL_MOUSEBUTTONUP;
 
 	my $mouse_x = $event->motion_x;
 	my $mouse_y = $event->motion_y;
@@ -379,7 +385,6 @@ sub wait_for_press ($;$) {
 			if ($x + $y) % 2 == 0;
 	}
 
-RETURN:
 	return MISC_PRESSED;
 }
 
@@ -454,6 +459,22 @@ sub show_result ($$) {
 	$self->process_pending_events;
 }
 
+sub show_helper_msg ($$) {
+	my $self = shift;
+	my @msgs = @_;
+
+	my $display = $self->{display};
+	my $y = 24;
+
+	my $text = SDLx::Text->new(
+		size    => 18,
+		color   => 0xffffdc,
+		shadow  => 1,
+		h_align => 'center',
+	);
+	$text->write_xy($display, 680, $y += 24, $_) for @msgs;
+}
+
 sub edit_board ($;$) {
 	my $self = shift;
 	my $board = shift || $self->{board};
@@ -462,10 +483,10 @@ sub edit_board ($;$) {
 	my $display = $self->{display};
 
 	my @rects = (
-		[ 580 +  20, 200, 64, 64 ],
-		[ 580 + 120, 200, 64, 64 ],
-		[ 580 +  20, 300, 64, 64 ],
-		[ 580 + 120, 300, 64, 64 ],
+		[ 580 +  20, 236, 64, 64 ],
+		[ 580 + 120, 236, 64, 64 ],
+		[ 580 +  20, 336, 64, 64 ],
+		[ 580 + 120, 336, 64, 64 ],
 	);
 	my @cp = (
 		[ White, Pawn ],
@@ -477,6 +498,13 @@ sub edit_board ($;$) {
 	my $current = 0;
 
 	$self->show_title("Edit Board");
+	$self->show_helper_msg(
+		"a - random board",
+		"e - empty board",
+		"r - revert",
+		"ESC - finish if unchanged",
+		"Enter - finish",
+	);
 
 	while (1) {
 		for my $i (0 .. 3) {
@@ -501,8 +529,7 @@ sub edit_board ($;$) {
 		my ($rv, $which, $is_second) = $self->wait_for_press(\@rects);
 
 		if ($rv == QUIT_PRESSED) {
-#			$board->copy($orig_board);
-			last;
+			last if $board->equals($orig_board);
 		}
 		if ($rv == RESTART_PRESSED) {
 			$board->copy($orig_board);
@@ -515,6 +542,18 @@ sub edit_board ($;$) {
 		}
 		if ($rv == RECT_PRESSED) {
 			$current = $which;
+		}
+		if ($rv == KEY_PRESSED) {
+			my $key_sym = $which;
+			if ($key_sym == SDLK_RETURN) {
+				last;
+			}
+			if ($key_sym == SDLK_e) {
+				$board->init("empty");
+			}
+			if ($key_sym == SDLK_a) {
+				$board->init("random");
+			}
 		}
 	}
 

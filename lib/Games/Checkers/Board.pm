@@ -23,17 +23,25 @@ use Games::Checkers::Constants;
 use Games::Checkers::IteratorConstants;
 use Games::Checkers::LocationConversions;
 
+sub init_default ($) {
+	my $self = shift;
+
+	vec($$self, 0, 32) = 0xFFF00FFF;
+	vec($$self, 1, 32) = 0xFFFF0000;
+	vec($$self, 2, 32) = 0x00000000;
+}
+
+sub init_clear ($) {
+	my $self = shift;
+
+	vec($$self, 0, 32) = 0x00000000;
+	vec($$self, 1, 32) = 0xFFFF0000;
+	vec($$self, 2, 32) = 0x00000000;
+}
+
 sub init ($$) {
 	my $self = shift;
 	my $board_or_locs = shift;
-
-	if (!$board_or_locs) {
-		vec($$self, 0, 32) = 0xFFF00FFF;
-		vec($$self, 1, 32) = 0xFFFF0000;
-		vec($$self, 2, 32) = 0x00000000;
-
-		return $self;
-	}
 
 	my $param_class = ref($board_or_locs);
 
@@ -41,6 +49,13 @@ sub init ($$) {
 	if ($param_class && $param_class->isa('Games::Checkers::Board')) {
 		return $self->copy($board_or_locs);
 	}
+
+	if (!$board_or_locs || $board_or_locs eq 'default') {
+		$self->init_default;
+		return $self;
+	}
+
+	$self->init_clear;
 
 	# support "a1,a3/h6/h2/b8" or "/22,4,8/9" param
 	if (!$param_class) {
@@ -132,9 +147,17 @@ sub copy ($$) {
 	my $self = shift;
 	my $board = shift;
 
+	die "Can't copy $board to $self\n" unless ref($self) eq ref($board);
 	$$self = $$board;
 
 	return $self;
+}
+
+sub equals ($$) {
+	my $self = shift;
+	my $board = shift;
+
+	return ref($self) eq ref($board) && $$self eq $$board;
 }
 
 sub clr_all ($) {
