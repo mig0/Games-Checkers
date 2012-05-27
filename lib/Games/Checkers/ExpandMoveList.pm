@@ -20,7 +20,6 @@ package Games::Checkers::ExpandMoveList;
 
 use base 'Games::Checkers::MoveLocationConstructor';
 use Games::Checkers::Constants; 
-use Games::Checkers::IteratorConstants;
 
 sub new ($$$) {
 	my $class = shift;
@@ -55,7 +54,7 @@ sub build_continue ($) {
 	my $iterator_class = "Games::Checkers::";
 	$iterator_class .= (qw(PawnStepIterator PawnBeatIterator KingStepIterator KingBeatIterator))
 		[($self->{piece} == King) * 2 + $self->{must_beat}];
-	my $rule_iterator = $iterator_class->new($self->dst_1, $self->{color});
+	my $rule_iterator = $iterator_class->new($self->{orig_board}, $self->dst_1, $self->{color});
 
 #	if (type == Pawn &&  must_beat) rule_iterator = &pawn_beat_iterator;
 #	if (type == Pawn && !must_beat) rule_iterator = &pawn_step_iterator;

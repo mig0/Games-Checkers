@@ -20,7 +20,7 @@ package Games::Checkers::Board;
 
 use Games::Checkers::BoardConstants;
 use Games::Checkers::Constants;
-use Games::Checkers::IteratorConstants;
+use Games::Checkers::Iterators;
 
 sub init_default ($) {
 	my $self = shift;
@@ -379,9 +379,8 @@ sub can_piece_step ($$;$) {
 	}
 	my $color = $self->color($loc);
 	my $step_dst = $self->piece($loc) == Pawn
-		? pawn_step_iterator
-		: king_step_iterator;
-	$step_dst->init($loc, $color);
+		? Games::Checkers::PawnStepIterator->new($self, $loc, $color)
+		: Games::Checkers::KingStepIterator->new($self, $loc, $color);
 	while ($step_dst->left) {
 		my $loc2 = $step_dst->next;
 		next if $locd != NL && $locd != $loc2;
@@ -404,9 +403,8 @@ sub can_piece_beat ($$;$) {
 	}
 	my $color = $self->color($loc);
 	my $beat_dst = $self->piece($loc) == Pawn
-		? pawn_beat_iterator
-		: king_beat_iterator;
-	$beat_dst->init($loc, $color);
+		? Games::Checkers::PawnBeatIterator->new($self, $loc, $color)
+		: Games::Checkers::KingBeatIterator->new($self, $loc, $color);
 	while ($beat_dst->left) {
 		my $loc2 = $beat_dst->next;
 		next if $locd != NL && $locd != $loc2;

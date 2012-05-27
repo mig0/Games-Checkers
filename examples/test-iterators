@@ -17,7 +17,7 @@ sub dump_location ($) {
 }
 
 print "All board locations:\n";
-my $iterator = Games::Checkers::LocationIterator->new;
+my $iterator = Games::Checkers::LocationIterator->new($board);
 my @locations = $iterator->all;
 print "\t", dump_location($_), "\n" foreach @locations;
 
@@ -25,7 +25,7 @@ my $loc = 22;
 foreach (qw(PawnStepIterator PawnBeatIterator KingStepIterator KingBeatIterator)) {
 	print "\nAll $_ candidate locations from ", dump_location($loc), ":\n";
 	my $class = "Games::Checkers::$_";
-	my $iterator = $class->new($loc, 0);
+	my $iterator = $class->new($board, $loc, 0);
 	my @locations = $iterator->all;
 	print "\t", dump_location($_), "\n" foreach @locations;
 }

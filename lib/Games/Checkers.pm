@@ -237,7 +237,6 @@ forward directions.
     Games::Checkers::ExpandMoveList
     Games::Checkers::FigureIterator
     Games::Checkers::Game
-    Games::Checkers::IteratorConstants
     Games::Checkers::Iterators
     Games::Checkers::KingBeatIterator
     Games::Checkers::KingStepIterator

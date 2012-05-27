@@ -22,13 +22,15 @@ package Games::Checkers::LocationIterator;
 
 use Games::Checkers::BoardConstants;
 
-sub new ($@) {
+sub new ($$%) {
 	my $class = shift;
+	my $board = shift || die "No board in constructor";
 
-	my $self = { loc => undef, @_ };
+	my $self = { board => $board, loc => undef, @_ };
 
 	bless $self, $class;
 	$self->restart;
+
 	return $self;
 }
 
@@ -40,7 +42,7 @@ sub last ($) {
 sub next ($) {
 	my $self = shift;
 	my $old = $self->{loc};
-	$self->{loc} = $self->increment;
+	$self->increment;
 	return $old;
 }
 
@@ -51,7 +53,10 @@ sub left ($) {
 
 sub increment ($) {
 	my $self = shift;
-	$self->{loc} == NL ? NL : ++$self->{loc};
+	return NL if $self->{loc} == NL;
+	$self->{loc} = NL
+		unless ++$self->{loc} < $self->{board}->locs;
+	return $self->{loc};
 }
 
 sub restart ($) {
@@ -74,12 +79,13 @@ package Games::Checkers::PieceRuleIterator;
 use base 'Games::Checkers::LocationIterator';
 use Games::Checkers::BoardConstants;
 
-sub new ($;$$) {
+sub new ($$$$) {
 	my $class = shift;
+	my $board = shift;
+	my $src   = shift;
+	my $color = shift;
 
-	my $self = $class->SUPER::new;
-	$self->init(@_) if @_;
-	return $self;
+	return $class->SUPER::new($board, src => $src, color => $color);
 }
 
 sub increment ($) {
@@ -94,19 +100,8 @@ sub increment ($) {
 
 sub restart ($) {
 	my $self = shift;
-	return unless defined $self->{src};
 	$self->{dnx} = 0;
 	$self->SUPER::restart;
-}
-
-sub init ($$$) {
-	my $self = shift;
-	my $src = shift;
-	my $color = shift;
-
-	$self->{src} = $src;
-	$self->{color} = $color;
-	$self->restart;
 }
 
 # ----------------------------------------------------------------------------
@@ -155,16 +150,6 @@ sub get_location ($$) { king_beat->[$_[0]->{src}][$_[1]]; }
 
 # ----------------------------------------------------------------------------
 
-package Games::Checkers::Iterators;
-
-# globals, so that we don't need to create these all the time, just init()
-use constant pawn_step_iterator => Games::Checkers::PawnStepIterator->new;
-use constant pawn_beat_iterator => Games::Checkers::PawnBeatIterator->new;
-use constant king_step_iterator => Games::Checkers::KingStepIterator->new;
-use constant king_beat_iterator => Games::Checkers::KingBeatIterator->new;
-
-# ----------------------------------------------------------------------------
-
 package Games::Checkers::ValidKingBeatIterator;
 
 use base 'Games::Checkers::PieceRuleIterator';
@@ -186,7 +171,7 @@ sub new ($$$) {
 	my $board = shift;
 	my $color = shift;
 
-	return $class->SUPER::new(board => $board, color => $color);
+	return $class->SUPER::new($board, color => $color);
 }
 
 sub increment ($) {
