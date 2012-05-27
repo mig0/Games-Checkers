@@ -26,17 +26,19 @@ use Games::Checkers::LocationConversions;
 sub init_default ($) {
 	my $self = shift;
 
-	vec($$self, 0, 32) = 0xFFF00FFF;
-	vec($$self, 1, 32) = 0xFFFF0000;
-	vec($$self, 2, 32) = 0x00000000;
+	$self->init_empty;
+	my $locs = $self->locs;
+
+	for (0 .. $self->default_rows * $self->size_x / 2 - 1) {
+		$self->set(            $_, White, Pawn);
+		$self->set($locs - 1 - $_, Black, Pawn);
+	}
 }
 
-sub init_clear ($) {
+sub init_empty ($) {
 	my $self = shift;
 
-	vec($$self, 0, 32) = 0x00000000;
-	vec($$self, 1, 32) = 0xFFFF0000;
-	vec($$self, 2, 32) = 0x00000000;
+	vec($$self, $_, 1) = 0 for 0 .. 3 * $self->locs - 1;
 }
 
 sub init ($$) {
@@ -55,13 +57,13 @@ sub init ($$) {
 		return $self;
 	}
 
-	$self->init_clear;
+	$self->init_empty;
 
 	# support "a1,a3/h6/h2/b8" or "/22,4,8/9" param
 	if (!$param_class) {
 		my @l;
 		if ($board_or_locs eq 'random') {
-			push @{$l[4 * rand() ** 2] ||= []}, $_ for grep { rand(2) > 1 } 1 .. 32;
+			push @{$l[4 * rand() ** 2] ||= []}, $_ for grep { rand(2) > 1 } 1 .. $self->locs;
 		} elsif ($board_or_locs ne 'empty') {
 			@l = map { [ split ',' ] } split '/', $board_or_locs;
 		}
@@ -103,6 +105,10 @@ sub new ($;$) {
 	return $self->init($board_or_locs);
 }
 
+sub locs ($) {
+	return 32;
+}
+
 sub size_x ($) {
 	return 8;
 }
@@ -111,22 +117,26 @@ sub size_y ($) {
 	return 8;
 }
 
+sub default_rows ($) {
+	return 3;
+}
+
 sub occup ($$) {
 	my $self = shift;
 	my $loc = shift;
-	return vec($$self, 0, 32) & (1 << $loc) ? 1 : 0;
+	return vec($$self, $loc, 1);
 }
 
 sub color ($$) {
 	my $self = shift;
 	my $loc = shift;
-	return vec($$self, 1, 32) & (1 << $loc) ? Black : White;
+	return vec($$self, $loc + $self->locs, 1);
 }
 
 sub piece ($$) {
 	my $self = shift;
 	my $loc = shift;
-	return vec($$self, 2, 32) & (1 << $loc) ? King : Pawn;
+	return vec($$self, $loc + $self->locs * 2, 1);
 }
 
 sub white ($$) {
@@ -166,27 +176,30 @@ sub equals ($$) {
 
 sub clr_all ($) {
 	my $self = shift;
-	vec($$self, 0, 32) = 0;
+	vec($$self, $_, 1) = 0 for 0 .. $self->locs - 1;
 }
 
 sub clr ($$) {
 	my $self = shift;
 	my $loc = shift;
-	vec($$self, 0, 32) &= ~(1 << $loc);
+	vec($$self, $loc, 1) = 0;
 }
 
 sub cnv ($$) {
 	my $self = shift;
 	my $loc = shift;
-	vec($$self, 2, 32) ^= (1 << $loc);
+	vec($$self, $loc + 2 * $self->locs, 1) ^= 1;
 }
 
 sub set ($$$$) {
 	my $self = shift;
 	my ($loc, $color, $piece) = @_;
-	vec($$self, 0, 32) |= (1 << $loc);
-	(vec($$self, 1, 32) &= ~(1 << $loc)) |= ((1 << $loc) * $color);
-	(vec($$self, 2, 32) &= ~(1 << $loc)) |= ((1 << $loc) * $piece);
+
+	my $locs = $self->locs;
+
+	vec($$self, $loc + 0 * $locs, 1) = 1;
+	vec($$self, $loc + 1 * $locs, 1) = $color;
+	vec($$self, $loc + 2 * $locs, 1) = $piece;
 }
 
 sub chk ($$$$) {
@@ -256,7 +269,7 @@ sub apply_move ($) {
 		$self->clr($self->figure_between($src, $dst)) if $beat;
 		# convert to king if needed
 		if (convert_type->[$color][$piece] & (1 << $dst)) {
-			vec($$self, 2, 32) ^= (1 << $dst);
+			$self->cnv($dst);
 			$piece ^= 1;
 		}
 	}
@@ -438,6 +451,7 @@ sub dump ($;$$$) {
 	my $size_y = $self->size_y;
 	my $size_1 = $size_x - 1;
 	my $size_2 = $size_x / 2;
+	my $size_3 = $size_y - 1;
 
 	my $str = "";
 	$str .= "\n";
@@ -448,7 +462,7 @@ sub dump ($;$$$) {
 		for (my $j = 0; $j < $size_x; $j++) {
 			my $is_used = ($i + $j) % 2;
 			if (($i + $j) % 2) {
-				my $loc = ($size_1 - $i) * $size_2 + int($j / 2);
+				my $loc = ($size_3 - $i) * $size_2 + int($j / 2);
 				my $ch0 = $ch{bcf};
 				my $is_king = $self->piece($loc) == King;
 				$ch0 = $self->white($loc) ? $is_king ? "8" : "O" : $is_king ? "&" : "@"
@@ -463,7 +477,7 @@ sub dump ($;$$$) {
 		}
 		$str .= "\n";
 		$str .= "  " . $ch{vll} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{ccl}" x $size_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{vrl}\n"
-			unless $compact || $i == $size_y - 1;
+			unless $compact || $i == $size_3;
 	}
 	$str .= "  " . $ch{blc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{hbl}" x $size_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{brc}\n"
 		unless $compact;
