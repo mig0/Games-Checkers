@@ -103,7 +103,11 @@ sub new ($;$) {
 	return $self->init($board_or_locs);
 }
 
-sub get_size ($) {
+sub size_x ($) {
+	return 8;
+}
+
+sub size_y ($) {
 	return 8;
 }
 
@@ -198,7 +202,7 @@ sub get_cost ($$) {
 	my $self = shift;
 	my $turn = shift;
 
-	my $size = $self->get_size;
+	my $size = $self->size_y;
 	my $size_1 = $size - 1;
 	my $size_2 = $size / 2;
 
@@ -430,17 +434,18 @@ sub dump ($;$$$) {
 	];
 	my %ch = %{$char_sets->[$ENV{DUMB_CHARS} ? 0 : 1]};
 
-	my $size = $self->get_size;
-	my $size_1 = $size - 1;
-	my $size_2 = $size / 2;
+	my $size_x = $self->size_x;
+	my $size_y = $self->size_y;
+	my $size_1 = $size_x - 1;
+	my $size_2 = $size_x / 2;
 
 	my $str = "";
 	$str .= "\n";
 	$str .= "  " . $ch{tlc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{htl}" x $size_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{trc}\n"
 		unless $compact;
-	for (my $i = 0; $i < $size; $i++) {
-		$str .= ($size - $i) . " $ch{vcl}";
-		for (my $j = 0; $j < $size; $j++) {
+	for (my $i = 0; $i < $size_y; $i++) {
+		$str .= ($size_y - $i) . " $ch{vcl}";
+		for (my $j = 0; $j < $size_x; $j++) {
 			my $is_used = ($i + $j) % 2;
 			if (($i + $j) % 2) {
 				my $loc = ($size_1 - $i) * $size_2 + int($j / 2);
@@ -458,11 +463,11 @@ sub dump ($;$$$) {
 		}
 		$str .= "\n";
 		$str .= "  " . $ch{vll} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{ccl}" x $size_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{vrl}\n"
-			unless $compact || $i == $size_1;
+			unless $compact || $i == $size_y - 1;
 	}
 	$str .= "  " . $ch{blc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{hbl}" x $size_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{brc}\n"
 		unless $compact;
-   $str .= "    a   b   c   d   e   f   g   h   \n";
+   $str .= "    " . join('', map { chr(ord('a') + $_ + ($_ > 8 ? 1 : 0)) . "   " } 0 .. $size_1) . "\n";
 	$str .= "\n" unless $compact;
 
 	$str =~ s/(?:\e\)0)?((?:\e.*?m)*.(?:\e.*?m)*)(\016.\017|.)((?:\e.*?m)*)(\016.\017|.)((?:\e.*?m)*)(\016.\017|.)((?:\e.*?m)*)/$1$3$5$7/g

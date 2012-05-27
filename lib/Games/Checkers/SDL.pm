@@ -76,9 +76,21 @@ sub new ($$$%) {
 	die "No expected image dir $image_dir\n"
 		unless -d $image_dir && -x _;
 
-	my $size = $board->get_size;
-	my $w = $size == 8 ? 800 : 1024;
-	my $h = $size == 8 ? 600 : 768;
+	my $size_x = $board->size_x;
+	my $size_y = $board->size_y;
+
+	my ($w, $h, $title_height, $helper_x) =
+		$size_x <=  6 ? ( 640,  480, 21, 428) :
+		$size_x <=  8 ? ( 800,  600, 24, 576) :
+		$size_x <= 10 ? (1024,  768, 26, 728) :
+		$size_x <= 14 ? (1280, 1024, 28, 940) :
+		die "Sorry, the board size ${size_x}x$size_y is not supported\n";
+
+	my $b_w = 64 * $size_x;
+	my $b_h = 64 * $size_y;
+	my $b_x = ($helper_x - $b_w) / 2 + 10;
+	my $b_y = ($h - $b_h) / 2;
+	my $helper_mid_x = ($w + $helper_x) / 2;
 
 	my $fullscreen = $params{fullscreen} ? 1 : 0;
 
@@ -92,8 +104,8 @@ sub new ($$$%) {
 
 	fill_rect_tiled($bg, 0, SDL::Image::load("$image_dir/bg-tile.jpg"));
 
-	SDL::Video::fill_rect($bg, SDL::Rect->new(41, 41, 64 * $size + 6, 64 * $size + 6), 0x50d050ff);
-	SDL::Video::fill_rect($bg, SDL::Rect->new(43, 43, 64 * $size + 2, 64 * $size + 2), 0x202020ff);
+	SDL::Video::fill_rect($bg, SDL::Rect->new($b_x - 3, $b_y - 3, $b_w + 6, $b_h + 6), 0x50d050ff);
+	SDL::Video::fill_rect($bg, SDL::Rect->new($b_x - 1, $b_y - 1, $b_w + 2, $b_h + 2), 0x202020ff);
 	SDL::Video::fill_rect($bg, SDL::Rect->new($w - 18, 2, 16, 16), 0xe0e0e0);
 	SDL::Video::fill_rect($bg, SDL::Rect->new($w - 16, 4, 12, 12), 0x707070);
 	SDL::Video::fill_rect($bg, SDL::Rect->new($w - 34, 6,  8,  8), 0xf0f0f0);
@@ -106,8 +118,8 @@ sub new ($$$%) {
 		shadow  => 1,
 		h_align => 'center',
 	);
-	$coord_text->write_xy($bg, 28, 66 + 64 * ($size - $_), $_) for 1 .. $size;
-	$coord_text->write_xy($bg, 77 + 64 * $_, $h - 40, chr(ord('a') + $_)) for 0 .. $size-1;
+	$coord_text->write_xy($bg, $b_x - 16, $b_y + 22 + 64 * ($size_y - $_), $_) for 1 .. $size_y;
+	$coord_text->write_xy($bg, $b_x + 33 + 64 * $_, $b_y + $b_h + 4, chr(ord('a') + $_ + ($_ > 8 ? 1 : 0))) for 0 .. $size_x - 1;
 
 	SDL::Video::blit_surface($bg, 0, $display, 0);
 
@@ -116,13 +128,13 @@ sub new ($$$%) {
 		SDL::Image::load("$image_dir/cell-black.png"),
 	);
 
-	for my $x (0 .. $size - 1) {
-		for my $y (0 .. $size - 1) {
+	for my $x (0 .. $size_x - 1) {
+		for my $y (0 .. $size_y - 1) {
 			SDL::Video::blit_surface(
 				$cells[($x + $y) % 2],
 				0,
 				$bg,
-				SDL::Rect->new(44 + 64 * $x, 44 + 64 * $y, 64, 64)
+				SDL::Rect->new($b_x + 64 * $x, $b_y + 64 * $y, 64, 64)
 			);
 		}
 	}
@@ -142,9 +154,19 @@ sub new ($$$%) {
 		},
 		w => $w,
 		h => $h,
+		size_x => $size_x,
+		size_y => $size_y,
+		b_x => $b_x,
+		b_y => $b_y,
+		b_w => $b_w,
+		b_h => $b_h,
+		title_height => $title_height,
+		helper_x => $helper_x,
+		helper_mid_x => $helper_mid_x,
 		move_msg_y => 0,
 		display => $display,
 		bg => $bg,
+		title_height => $title_height,
 		event => SDL::Event->new,
 		text => SDLx::Text->new(shadow => 1, shadow_offset => 2, size => 20),
 		mouse_pressed => 0,
@@ -180,17 +202,16 @@ sub show_title ($;$) {
 	my $self = shift;
 	my $title = shift || $self->{title};
 
-	my $size = $self->{board}->get_size;
 	my $display = $self->{display};
 
-	$self->blit_bg([ 0, 6, 2 * 44 + 64 * $size, 30 ]);
+	$self->blit_bg([ 0, 0, $self->{helper_x}, $self->{b_y} - 4 ]);
 
 	my $title_text = SDLx::Text->new(
-		size    => 24,
+		size    => $self->{title_height},
 		color   => 0xffffdc,
 		bold    => 1,
 		shadow  => 1,
-		x       => 44 + 64 * $size / 2,
+		x       => $self->{helper_x} / 2,
 		y       => 6,
 		h_align => 'center',
 		text    => $title,
@@ -201,7 +222,7 @@ sub show_title ($;$) {
 sub clear_helper ($) {
 	my $self = shift;
 
-	$self->blit_bg([580, 20]);
+	$self->blit_bg([$self->{helper_x}, 20]);
 }
 
 sub restart ($$) {
@@ -221,9 +242,7 @@ sub quit ($) {
 sub pause ($) {
 	my $self = shift;
 
-	my $size = $self->{board}->get_size;
 	my $display = $self->{display};
-
 	my $display_copy = SDL::Video::display_format($display);
 
 	$self->{paused} = 1;
@@ -372,12 +391,13 @@ sub wait_for_press ($;$) {
 	}
 
 	# check board locations
-	my $size = $self->{board}->get_size;
-	$mouse_x -= 44;
-	$mouse_y -= 44;
+	my $size_x = $self->{size_x};
+	my $size_y = $self->{size_y};
+	$mouse_x -= $self->{b_x};
+	$mouse_y -= $self->{b_y};
 	if (
-		$mouse_x >= 0 && $mouse_x < $size * 64 &&
-		$mouse_y >= 0 && $mouse_y < $size * 64
+		$mouse_x >= 0 && $mouse_x < $self->{b_h} &&
+		$mouse_y >= 0 && $mouse_y < $self->{b_w}
 	) {
 		my $x = 1 + int($mouse_x / 64);
 		my $y = 8 - int($mouse_y / 64);
@@ -401,10 +421,10 @@ sub show_board ($) {
 
 	my $display = $self->{display};
 	my $board = $self->{board};
-	my $size = $board->get_size;
+	my $size_y = $self->{size_y};
 
 	# draw empty board first
-	$self->blit_bg([ 44, 44, 64 * $size, 64 * $size ]);
+	$self->blit_bg([ $self->{b_x}, $self->{b_y}, $self->{b_w}, $self->{b_h} ]);
 
 	for my $color (White, Black) {
 		my $iterator = Games::Checkers::FigureIterator->new($board, $color);
@@ -413,7 +433,7 @@ sub show_board ($) {
 			my ($x, $y) = location_to_arr($location);
 			SDL::Video::blit_surface(
 				$self->{pieces}{$piece}{$color}, 0,
-				$display, SDL::Rect->new(52 + 64 * ($x - 1), 52 + 64 * ($size - $y), 48, 48)
+				$display, SDL::Rect->new(8 + $self->{b_x} + 64 * ($x - 1), 8 + $self->{b_y} + 64 * ($size_y - $y), 48, 48)
 			);
 		}
 	}
@@ -437,12 +457,12 @@ sub show_move ($$$$$) {
 		$self->{move_msg_y} += 20;
 		$str = "$n_str $str";
 	} else {
-		$x = 117;
+		$x = $self->{helper_mid_x} - $self->{helper_x} + 7;
 	}
 
-	$text->write_xy($display, 580 +  0, $self->{move_msg_y} += 20, $n_str)
+	$text->write_xy($display, $self->{helper_x} +  0, $self->{move_msg_y} += 20, $n_str)
 		if !$self->{move_msg_y};
-	$text->write_xy($display, 580 + $x, $self->{move_msg_y}, $str);
+	$text->write_xy($display, $self->{helper_x} + $x, $self->{move_msg_y}, $str);
 
 	$self->process_pending_events;
 }
@@ -454,7 +474,7 @@ sub show_result ($$) {
 	my $text = $self->{text};
 	$text->h_align('center');
 	$text->color([220, 220, 150]);
-	$text->write_xy($self->{display}, ($self->{w} + 540) / 2, 0, $message);
+	$text->write_xy($self->{display}, $self->{helper_mid_x}, 0, $message);
 
 	$self->process_pending_events;
 }
@@ -464,7 +484,7 @@ sub show_helper_msg ($$) {
 	my @msgs = @_;
 
 	my $display = $self->{display};
-	my $y = 24;
+	my $y = 48;
 
 	my $text = SDLx::Text->new(
 		size    => 18,
@@ -472,7 +492,8 @@ sub show_helper_msg ($$) {
 		shadow  => 1,
 		h_align => 'center',
 	);
-	$text->write_xy($display, 680, $y += 24, $_) for @msgs;
+	$text->write_xy($display, $self->{helper_mid_x}, $y += 24, $_)
+		for @msgs;
 }
 
 sub edit_board ($;$) {
@@ -483,10 +504,10 @@ sub edit_board ($;$) {
 	my $display = $self->{display};
 
 	my @rects = (
-		[ 580 +  20, 236, 64, 64 ],
-		[ 580 + 120, 236, 64, 64 ],
-		[ 580 +  20, 336, 64, 64 ],
-		[ 580 + 120, 336, 64, 64 ],
+		[ $self->{helper_mid_x} - 82, 264, 64, 64 ],
+		[ $self->{helper_mid_x} + 18, 264, 64, 64 ],
+		[ $self->{helper_mid_x} - 82, 364, 64, 64 ],
+		[ $self->{helper_mid_x} + 18, 364, 64, 64 ],
 	);
 	my @cp = (
 		[ White, Pawn ],
@@ -511,7 +532,7 @@ sub edit_board ($;$) {
 			my $rect = $rects[$i];
 			if ($i == $current) {
 				SDL::Video::blit_surface(
-					$self->{bg}, SDL::Rect->new(44, 44 + 64, 64, 64),
+					$self->{bg}, SDL::Rect->new($self->{b_x}, $self->{b_y} + 64, 64, 64),
 					$display, SDL::Rect->new(@$rect),
 				);
 			} else {
