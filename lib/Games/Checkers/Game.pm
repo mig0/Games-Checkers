@@ -115,6 +115,8 @@ sub call_frontend ($$@) {
 	if ($rv == -2) {
 		$self->quit;
 	}
+
+	return $rv;
 }
 
 sub sleep ($$) {
@@ -206,7 +208,8 @@ sub show_move ($$) {
 	} qw(board color move_count);
 
 	if ($self->{frontend}) {
-		$self->call_frontend('show_move', $move, $color, $move_count);
+		$self->call_frontend('show_move', $move, $color, $move_count)
+			&& return;  # return on "restart" or unconfirmed "quit"
 	} else {
 		printf "  %02d. %s", 1 + $move_count / 2, $color == White ? "" : "... ";
 		print $move->dump, "                           \n";
@@ -228,7 +231,8 @@ sub show_result ($;$$) {
 	my $break = shift;
 
 	if ($self->{frontend}) {
-		$self->call_frontend('show_result', $message);
+		$self->call_frontend('show_result', $message)
+			&& return;  # return on "restart" or unconfirmed "quit"
 	} else {
 		print "\n$message\e[0K\n";
 	}
