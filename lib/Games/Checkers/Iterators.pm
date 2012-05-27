@@ -192,11 +192,21 @@ sub new ($$$) {
 sub increment ($) {
 	my $self = shift;
 	my $loc = $self->{loc};
+
 	return NL if $loc == NL;
-	while (++$loc != NL && (
-		!$self->{board}->occup($loc) ||
-		$self->{board}->color($loc) != $self->{color})) {}
-	return $self->{loc} = $loc;
+
+	my $board = $self->{board};
+
+	while (++$loc < $board->locs) {
+		if (
+			$board->occup($loc) &&
+			$board->color($loc) == $self->{color}
+		) {
+			return $self->{loc} = $loc;
+		}
+	}
+
+	return $self->{loc} = NL;
 }
 
 1;

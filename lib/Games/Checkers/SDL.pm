@@ -390,16 +390,14 @@ sub wait_for_press ($;$) {
 	}
 
 	# check board locations
-	my $size_x = $self->{size_x};
-	my $size_y = $self->{size_y};
 	$mouse_x -= $self->{b_x};
 	$mouse_y -= $self->{b_y};
 	if (
-		$mouse_x >= 0 && $mouse_x < $self->{b_h} &&
-		$mouse_y >= 0 && $mouse_y < $self->{b_w}
+		$mouse_x >= 0 && $mouse_x < $self->{b_w} &&
+		$mouse_y >= 0 && $mouse_y < $self->{b_h}
 	) {
-		my $x = 1 + int($mouse_x / 64);
-		my $y = 8 - int($mouse_y / 64);
+		my $x = 1               + int($mouse_x / 64);
+		my $y = $self->{size_y} - int($mouse_y / 64);
 		return (BOARD_LOC_PRESSED, $self->{board}->arr_to_loc($x, $y), $event->button_button == SDL_BUTTON_RIGHT)
 			if ($x + $y) % 2 == 0;
 	}

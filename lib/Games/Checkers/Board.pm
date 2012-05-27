@@ -150,7 +150,7 @@ sub arr_to_loc ($$$) {
 	my $self = shift;
 	my ($x, $y) = @_;
 
-	return int((($x - 1) % $self->size_x) / 2) + ($y - 1) * $self->size_x_2;
+	return int(($x - 1) / 2) + ($y - 1) * $self->size_x_2;
 }
 
 sub ind_to_chr ($$) {
