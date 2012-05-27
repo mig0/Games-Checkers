@@ -21,7 +21,6 @@ package Games::Checkers::Board;
 use Games::Checkers::BoardConstants;
 use Games::Checkers::Constants;
 use Games::Checkers::IteratorConstants;
-use Games::Checkers::LocationConversions;
 
 sub init_default ($) {
 	my $self = shift;
@@ -81,10 +80,10 @@ sub init ($$) {
 			my $locs = shift @piece_color_locs || [];
 			for my $loc (@$locs) {
 				$loc = ref($loc) eq 'ARRAY'
-					? arr_to_location($loc->[0], $loc->[1])
+					? $self->arr_to_loc($loc->[0], $loc->[1])
 					: $loc =~ /^\d/
-						? num_to_location($loc)
-						: str_to_location($loc);
+						? $self->num_to_loc($loc)
+						: $self->str_to_loc($loc);
 				$self->set($loc, $color, $piece);
 				$self->cnv($loc) if convert_type->[$color][$piece] & (1 << $loc);
 			}
@@ -119,6 +118,99 @@ sub size_y ($) {
 
 sub default_rows ($) {
 	return 3;
+}
+
+sub notation ($) {
+	# BL - 0, BR - 1, TL - 2, TR - 3
+	return $ENV{ITALIAN_BOARD_NOTATION} ? 3 : 1;
+}
+
+sub size_x_1 ($) {
+	return $_[0]->size_x - 1;
+}
+
+sub size_x_2 ($) {
+	return $_[0]->size_x / 2;
+}
+
+sub size_y_1 ($) {
+	return $_[0]->size_y - 1;
+}
+
+sub loc_to_arr ($$) {
+	my $self = shift;
+	my $loc = shift;
+
+	my $size_x_2 = $self->size_x_2;
+
+	return (int($loc % $size_x_2) * 2 + int(($loc / $size_x_2) % 2) + 1, int($loc / $size_x_2) + 1);
+}
+
+sub arr_to_loc ($$$) {
+	my $self = shift;
+	my ($x, $y) = @_;
+
+	return int((($x - 1) % $self->size_x) / 2) + ($y - 1) * $self->size_x_2;
+}
+
+sub ind_to_chr ($$) {
+	my $self = shift;
+	my $ind = shift;
+	
+	return chr(ord('a') + $ind - 1 + ($ind >= 10));
+}
+
+sub chr_to_ind ($$) {
+	my $self = shift;
+	my $chr = shift;
+	
+	return ord($chr) - ord('a') + 1 - ($chr ge 'j');
+}
+
+sub loc_to_str ($$) {
+	my $self = shift;
+	my $loc = shift;
+
+	my @c = $self->loc_to_arr($loc);
+
+	return $self->ind_to_chr($c[0]) . $c[1];
+}
+
+sub str_to_loc ($$) {
+	my $self = shift;
+	my $str = shift;
+
+	$str =~ /^(\w)(\d)$/ || die "Invalid board coordinate string ($str)\n";
+
+	return $self->arr_to_loc($self->chr_to_ind($1), $2);
+}
+
+sub loc_to_num ($$) {
+	my $self = shift;
+	my $loc = shift;
+
+	my $size_x_2 = $self->size_x_2;
+	my $notation = $self->notation;
+
+	my $num = $notation == 1 || $notation == 2
+		? (int($loc / $size_x_2) + 1) * $size_x_2 - $loc % $size_x_2
+		: $loc + 1;
+
+	return $notation <= 1 ? $num : $self->locs - 1 - $num;
+}
+
+sub num_to_loc ($$) {
+	my $self = shift;
+	my $num = shift;
+
+	my $size_x_2 = $self->size_x_2;
+	my $notation = $self->notation;
+
+	my $loc = $notation == 1 || $notation == 2
+		? (int(($num - 1) / $size_x_2) + 1) * $size_x_2 - 1 - ($num - 1) % $size_x_2
+		: $num - 1;
+
+	return $notation <= 1 ? $loc : $self->locs - 1 - $loc;
 }
 
 sub occup ($$) {
@@ -215,9 +307,8 @@ sub get_cost ($$) {
 	my $self = shift;
 	my $turn = shift;
 
-	my $size = $self->size_y;
-	my $size_1 = $size - 1;
-	my $size_2 = $size / 2;
+	my $size_y_1 = $self->size_y_1;
+	my $size_x_2 = $self->size_x_2;
 
 	# Count white & black figures
 	my (
@@ -230,7 +321,7 @@ sub get_cost ($$) {
 		my $loc = $whites_iterator->next;
 		my $is_pawn = $self->piece($loc) == Pawn;
 		$is_pawn ? $white_pawns++ : $white_kings++;
-		$white_bonus += int($loc / $size_2) if $is_pawn;
+		$white_bonus += int($loc / $size_x_2) if $is_pawn;
 	}
 
 	my $blacks_iterator = new Games::Checkers::FigureIterator($self, Black);
@@ -238,7 +329,7 @@ sub get_cost ($$) {
 		my $loc = $blacks_iterator->next;
 		my $is_pawn = $self->piece($loc) == Pawn;
 		$is_pawn ? $black_pawns++ : $black_kings++;
-		$black_bonus += $size_1 - int($loc / $size_2) if $is_pawn;
+		$black_bonus += $size_y_1 - int($loc / $size_x_2) if $is_pawn;
 	}
 
 	return -1e8 if $white_pawns + $white_kings == 0;
@@ -447,22 +538,22 @@ sub dump ($;$$$) {
 	];
 	my %ch = %{$char_sets->[$ENV{DUMB_CHARS} ? 0 : 1]};
 
-	my $size_x = $self->size_x;
-	my $size_y = $self->size_y;
-	my $size_1 = $size_x - 1;
-	my $size_2 = $size_x / 2;
-	my $size_3 = $size_y - 1;
+	my $size_x   = $self->size_x;
+	my $size_y   = $self->size_y;
+	my $size_x_1 = $self->size_x_1;
+	my $size_x_2 = $self->size_x_2;
+	my $size_y_1 = $self->size_y_1;
 
 	my $str = "";
 	$str .= "\n";
-	$str .= "  " . $ch{tlc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{htl}" x $size_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{trc}\n"
+	$str .= "  " . $ch{tlc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{htl}" x $size_x_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{trc}\n"
 		unless $compact;
 	for (my $i = 0; $i < $size_y; $i++) {
 		$str .= ($size_y - $i) . " $ch{vcl}";
 		for (my $j = 0; $j < $size_x; $j++) {
 			my $is_used = ($i + $j) % 2;
 			if (($i + $j) % 2) {
-				my $loc = ($size_3 - $i) * $size_2 + int($j / 2);
+				my $loc = ($size_y_1 - $i) * $size_x_2 + int($j / 2);
 				my $ch0 = $ch{bcf};
 				my $is_king = $self->piece($loc) == King;
 				$ch0 = $self->white($loc) ? $is_king ? "8" : "O" : $is_king ? "&" : "@"
@@ -476,12 +567,12 @@ sub dump ($;$$$) {
 			$str .= $ch{vcl};
 		}
 		$str .= "\n";
-		$str .= "  " . $ch{vll} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{ccl}" x $size_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{vrl}\n"
-			unless $compact || $i == $size_3;
+		$str .= "  " . $ch{vll} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{ccl}" x $size_x_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{vrl}\n"
+			unless $compact || $i == $size_y_1;
 	}
-	$str .= "  " . $ch{blc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{hbl}" x $size_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{brc}\n"
+	$str .= "  " . $ch{blc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{hbl}" x $size_x_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{brc}\n"
 		unless $compact;
-   $str .= "    " . join('', map { chr(ord('a') + $_ + ($_ > 8 ? 1 : 0)) . "   " } 0 .. $size_1) . "\n";
+   $str .= "    " . join('', map { $self->ind_to_chr($_) . "   " } 1 .. $size_x) . "\n";
 	$str .= "\n" unless $compact;
 
 	$str =~ s/(?:\e\)0)?((?:\e.*?m)*.(?:\e.*?m)*)(\016.\017|.)((?:\e.*?m)*)(\016.\017|.)((?:\e.*?m)*)(\016.\017|.)((?:\e.*?m)*)/$1$3$5$7/g
@@ -489,7 +580,7 @@ sub dump ($;$$$) {
 
 	# prepare prefix for each board line, if any
 	my $lines = () = $str =~ /\n/g;
-	$sprefix = " " x ($size_2 / ($compact && 2.5 || 1) * $sprefix) if $sprefix =~ /^\d+$/;
+	$sprefix = " " x ($size_x_2 / ($compact && 2.5 || 1) * $sprefix) if $sprefix =~ /^\d+$/;
 	my @cprefix = $cprefix ? $cprefix =~ /(\w\d[:-]\w\d|:\w\d|-\d{1,5}|\d{1,6})/g : ();
 	my $l = 0;
 	my @prefix = map {

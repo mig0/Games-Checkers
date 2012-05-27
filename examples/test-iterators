@@ -7,11 +7,13 @@ use FindBin;
 use lib "$FindBin::Bin/../lib";
 
 use Games::Checkers::Iterators;
-use Games::Checkers::LocationConversions;
+use Games::Checkers::Board;
+
+my $board = Games::Checkers::Board->new;
 
 sub dump_location ($) {
 	my $loc = shift;
-	return sprintf("%02d (%s)", $loc, location_to_str($loc));
+	return sprintf("%02d (%s)", $loc, $board->loc_to_str($loc));
 }
 
 print "All board locations:\n";

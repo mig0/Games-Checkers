@@ -19,7 +19,6 @@ use warnings;
 package Games::Checkers::Move;
 
 use Games::Checkers::BoardConstants;
-use Games::Checkers::LocationConversions;
 
 sub new ($$$$) {
 	my $class = shift;
@@ -62,13 +61,16 @@ sub clone ($) {
 	return Games::Checkers::Move->new(@$self);
 }
 
-sub dump ($) {
+sub dump ($$) {
 	my $self = shift;
+	my $board = shift || die;
+
 	my $delim = $self->is_beat ? ":" : "-";
-	my $str = location_to_str($self->source);
+	my $str = $board->loc_to_str($self->source);
 	for (my $i = 0; $i < $self->num_steps; $i++) {
-		$str .= $delim . location_to_str($self->destin($i));
+		$str .= $delim . $board->loc_to_str($self->destin($i));
 	}
+
 	return $str;
 }
 

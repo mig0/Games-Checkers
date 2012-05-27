@@ -68,7 +68,7 @@ Games::Checkers - Play the Checkers games
         my $move = $board_tree->choose_best_move;  # or: choose_random_move
 
         $board->transform($move);
-        print $move->dump, "\n", $board->dump;
+        print $move->dump($board), "\n", $board->dump;
         $color = ($color == White) ? Black : White;
     }
 
@@ -241,7 +241,6 @@ forward directions.
     Games::Checkers::Iterators
     Games::Checkers::KingBeatIterator
     Games::Checkers::KingStepIterator
-    Games::Checkers::LocationConversions
     Games::Checkers::LocationIterator
     Games::Checkers::Move
     Games::Checkers::MoveConstants

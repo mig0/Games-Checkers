@@ -18,7 +18,7 @@ use warnings;
 
 package Games::Checkers::PDNParser;
 
-use Games::Checkers::LocationConversions;
+use Games::Checkers::Board;
 use IO::File;
 
 sub new ($$) {
@@ -69,6 +69,8 @@ sub next_record ($) {
 		unless $result;
 	my $lineno = $self->{lineno};
 
+	my $board = Games::Checkers::Board->new;  # should use GameType
+
 	my $move_string = "";
 	while (!$move_string || ($line = $self->{fd}->getline) && $self->{lineno}++) {
 		$line =~ s/[\r\n]+$/ /;
@@ -97,12 +99,12 @@ sub next_record ($) {
 			|| die $self->error_prefix . "\tIncorrect move notation ($_)\n";
 		[
 			$3 eq "-" ? 0 : 1,
-			defined $2 ? num_to_location($1) : str_to_location($1),
-			defined $5 ? num_to_location($4) : str_to_location($4),
+			defined $2 ? $board->num_to_loc($1) : $board->str_to_loc($1),
+			defined $5 ? $board->num_to_loc($4) : $board->str_to_loc($4),
 		]
 	} @move_verge_strings;
 
-	return [ \@move_verge_trios, $record_values ];
+	return [ \@move_verge_trios, $record_values, $board ];
 }
 
 1;

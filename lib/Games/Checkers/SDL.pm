@@ -20,7 +20,6 @@ package Games::Checkers::SDL;
 
 use Games::Checkers::Constants;
 use Games::Checkers::Iterators;
-use Games::Checkers::LocationConversions;
 use Games::Checkers::Board;
 
 use SDL;
@@ -119,7 +118,7 @@ sub new ($$$%) {
 		h_align => 'center',
 	);
 	$coord_text->write_xy($bg, $b_x - 16, $b_y + 22 + 64 * ($size_y - $_), $_) for 1 .. $size_y;
-	$coord_text->write_xy($bg, $b_x + 33 + 64 * $_, $b_y + $b_h + 4, chr(ord('a') + $_ + ($_ > 8 ? 1 : 0))) for 0 .. $size_x - 1;
+	$coord_text->write_xy($bg, $b_x - 31 + 64 * $_, $b_y + $b_h + 4, $board->ind_to_chr($_)) for 1 .. $size_x;
 
 	SDL::Video::blit_surface($bg, 0, $display, 0);
 
@@ -401,7 +400,7 @@ sub wait_for_press ($;$) {
 	) {
 		my $x = 1 + int($mouse_x / 64);
 		my $y = 8 - int($mouse_y / 64);
-		return (BOARD_LOC_PRESSED, arr_to_location($x, $y), $event->button_button == SDL_BUTTON_RIGHT)
+		return (BOARD_LOC_PRESSED, $self->{board}->arr_to_loc($x, $y), $event->button_button == SDL_BUTTON_RIGHT)
 			if ($x + $y) % 2 == 0;
 	}
 
@@ -428,9 +427,9 @@ sub show_board ($) {
 
 	for my $color (White, Black) {
 		my $iterator = Games::Checkers::FigureIterator->new($board, $color);
-		for my $location ($iterator->all) {
-			my $piece = $board->piece($location);
-			my ($x, $y) = location_to_arr($location);
+		for my $loc ($iterator->all) {
+			my $piece = $board->piece($loc);
+			my ($x, $y) = $board->loc_to_arr($loc);
 			SDL::Video::blit_surface(
 				$self->{pieces}{$piece}{$color}, 0,
 				$display, SDL::Rect->new(8 + $self->{b_x} + 64 * ($x - 1), 8 + $self->{b_y} + 64 * ($size_y - $y), 48, 48)
@@ -450,7 +449,7 @@ sub show_move ($$$$$) {
 	my $text = $self->{text};
 	my $display = $self->{display};
 
-	my $str = $move->dump;
+	my $str = $move->dump($self->{board});
 	my $n_str = int($count / 2 + 1) . '.';
 	my $x = 0;
 	if ($count % 2 == 0) {

@@ -212,7 +212,7 @@ sub show_move ($$) {
 			&& return;  # return on "restart" or unconfirmed "quit"
 	} else {
 		printf "  %02d. %s", 1 + $move_count / 2, $color == White ? "" : "... ";
-		print $move->dump, "                           \n";
+		print $move->dump($board), "                           \n";
 	}
 
 	$board->apply_move($move);
