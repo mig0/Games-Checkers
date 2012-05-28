@@ -20,7 +20,7 @@ use warnings;
 
 package Games::Checkers::LocationIterator;
 
-use Games::Checkers::BoardConstants;
+use Games::Checkers::Constants;
 
 sub new ($$%) {
 	my $class = shift;
@@ -77,7 +77,7 @@ sub all ($) {
 package Games::Checkers::PieceRuleIterator;
 
 use base 'Games::Checkers::LocationIterator';
-use Games::Checkers::BoardConstants;
+use Games::Checkers::Constants;
 
 sub new ($$$$) {
 	my $class = shift;
@@ -85,21 +85,29 @@ sub new ($$$$) {
 	my $src   = shift;
 	my $color = shift;
 
-	return $class->SUPER::new($board, src => $src, color => $color);
+	my $self = $class->SUPER::new($board);
+
+	$self->{locs} = $self->get_locations($src, $color);
+	$self->restart;
+
+	return $self;
 }
 
 sub increment ($) {
 	my $self = shift;
 
 	my $loc = NL;
-	while ($loc == NL && $self->{dnx} < $self->destinations) {
-		$loc = $self->get_location($self->{dnx}++);
+	while ($loc == NL && $self->{dnx} < @{$self->{locs}}) {
+		$loc = $self->{locs}->[$self->{dnx}++];
 	}
 	return $self->{loc} = $loc;
 }
 
 sub restart ($) {
 	my $self = shift;
+
+	return unless $self->{locs};
+
 	$self->{dnx} = 0;
 	$self->SUPER::restart;
 }
@@ -109,62 +117,47 @@ sub restart ($) {
 package Games::Checkers::PawnStepIterator;
 
 use base 'Games::Checkers::PieceRuleIterator';
-use Games::Checkers::BoardConstants;
 
-sub destinations ($) { 2 }
-
-sub get_location ($$) { pawn_step->[$_[0]->{color}][$_[0]->{src}][$_[1]]; }
+sub get_locations ($$$) { $_[0]->{board}->pawn_step->[$_[2]][$_[1]]; }
 
 # ----------------------------------------------------------------------------
 
 package Games::Checkers::PawnBeatIterator;
 
 use base 'Games::Checkers::PieceRuleIterator';
-use Games::Checkers::BoardConstants;
 
-sub destinations ($) { 4 }
-
-sub get_location ($$) { pawn_beat->[$_[0]->{src}][$_[1]]; }
+sub get_locations ($$$) { $_[0]->{board}->pawn_beat->[$_[1]]; }
 
 # ----------------------------------------------------------------------------
 
 package Games::Checkers::KingStepIterator;
 
 use base 'Games::Checkers::PieceRuleIterator';
-use Games::Checkers::BoardConstants;
 
-sub destinations ($) { 13 }
-
-sub get_location ($$) { king_step->[$_[0]->{src}][$_[1]]; }
+sub get_locations ($$$) { $_[0]->{board}->king_step->[$_[1]]; }
 
 # ----------------------------------------------------------------------------
 
 package Games::Checkers::KingBeatIterator;
 
 use base 'Games::Checkers::PieceRuleIterator';
-use Games::Checkers::BoardConstants;
 
-sub destinations ($) { 9 }
-
-sub get_location ($$) { king_beat->[$_[0]->{src}][$_[1]]; }
+sub get_locations ($$$) { $_[0]->{board}->king_beat->[$_[1]]; }
 
 # ----------------------------------------------------------------------------
 
 package Games::Checkers::ValidKingBeatIterator;
 
 use base 'Games::Checkers::PieceRuleIterator';
-use Games::Checkers::BoardConstants;
 
-sub destinations ($) { 9 }
-
-sub get_location ($$) { king_beat->[$_[0]->{src}][$_[1]]; }
+sub get_locations ($$$) { $_[0]->{board}->king_beat->[$_[1]]; }
 
 # ----------------------------------------------------------------------------
 
 package Games::Checkers::FigureIterator;
 
 use base 'Games::Checkers::LocationIterator';
-use Games::Checkers::BoardConstants;
+use Games::Checkers::Constants;
 
 sub new ($$$) {
 	my $class = shift;

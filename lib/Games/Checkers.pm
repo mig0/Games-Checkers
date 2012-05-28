@@ -224,7 +224,7 @@ forward directions.
 
     Games::Checkers
     Games::Checkers::Board
-    Games::Checkers::BoardConstants
+    Games::Checkers::Board::_8x8
     Games::Checkers::BoardTree
     Games::Checkers::BoardTreeNode
     Games::Checkers::CompPlayer

@@ -19,7 +19,7 @@ use warnings;
 package Games::Checkers::MoveLocationConstructor;
 
 use Games::Checkers::Constants;
-use Games::Checkers::BoardConstants;
+use Games::Checkers::Board;
 use Games::Checkers::MoveConstants;
 
 use constant MAX_MOVE_JUMP_NUM => 9;
@@ -122,7 +122,7 @@ sub apply_last_dst ($) {
 	$board->clr($src);
 	$board->set($dst, $self->{color}, $self->{piece});
 	$board->clr($board->figure_between($src, $dst)) if $self->{must_beat};
-	if (convert_type->[$self->{color}][$self->{piece}] & (1 << $dst)) {
+	if ($self->{piece} == Pawn && $board->is_crowning->[$self->{color}][$dst]) {
 		$board->cnv($dst);
 		$self->{piece} ^= 1;
 	}

@@ -26,6 +26,8 @@ use Games::Checkers::DeclareConstant {
 	Black => 1,
 	Pawn => 0,
 	King => 1,
+	NL => -2,
+	ML => -3,
 	DIE_WITH_STACK => sub {
 		for (my $i = 0; ; $i++) {
 			my ($package, $filename, $line, $subroutine) = caller($i);

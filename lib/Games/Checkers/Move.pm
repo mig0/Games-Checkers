@@ -18,7 +18,7 @@ use warnings;
 
 package Games::Checkers::Move;
 
-use Games::Checkers::BoardConstants;
+use Games::Checkers::Constants;
 
 sub new ($$$$) {
 	my $class = shift;

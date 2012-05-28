@@ -129,7 +129,8 @@ sub choose_best_son ($$$$) {
 package Games::Checkers::BoardTree;
 
 use Games::Checkers::MoveConstants;
-use Games::Checkers::BoardConstants;
+
+use constant DEFAULT_LEVEL => 3;
 
 sub new ($$$;$) {
 	my $class = shift;

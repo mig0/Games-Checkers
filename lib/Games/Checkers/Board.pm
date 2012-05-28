@@ -18,7 +18,6 @@ use warnings;
 
 package Games::Checkers::Board;
 
-use Games::Checkers::BoardConstants;
 use Games::Checkers::Constants;
 use Games::Checkers::Iterators;
 
@@ -85,7 +84,7 @@ sub init ($$) {
 						? $self->num_to_loc($loc)
 						: $self->str_to_loc($loc);
 				$self->set($loc, $color, $piece);
-				$self->cnv($loc) if convert_type->[$color][$piece] & (1 << $loc);
+				$self->cnv($loc) if $piece == Pawn && $self->is_crowning->[$color][$loc];
 			}
 		}
 	}
@@ -93,9 +92,17 @@ sub init ($$) {
 	return $self;
 }
 
-sub new ($;$) {
+sub new ($;$$) {
 	my $class = shift;
 	my $board_or_locs = shift;
+	my $size = shift;
+
+	if ($class eq __PACKAGE__) {
+		$size ||= 8;
+		$size = "${size}x$size" if $size =~ /^\d+$/;
+		$class = __PACKAGE__ . "::_$size";
+		eval "use $class"; die $@ if $@;
+	}
 
 	my $data = '';
 	my $self = \$data;
@@ -359,7 +366,7 @@ sub apply_move ($) {
 		$self->set($dst, $color, $piece);
 		$self->clr($self->figure_between($src, $dst)) if $beat;
 		# convert to king if needed
-		if (convert_type->[$color][$piece] & (1 << $dst)) {
+		if ($piece == Pawn && $self->is_crowning->[$color][$dst]) {
 			$self->cnv($dst);
 			$piece ^= 1;
 		}
@@ -447,10 +454,13 @@ sub figure_between ($$$) {
 	my $src = shift;
 	my $dst = shift;
 
-	for (my $drc = 0; $drc < DIRECTION_NUM; $drc++) {
+	my $num_directions = @{$self->loc_directions->[$src]};
+	for (my $drc = 0; $drc < $num_directions; $drc++) {
 		my $figures = 0;
 		my $figure = NL;
-		for (my $loc = loc_directions->[$src][$drc]; $loc != NL; $loc = loc_directions->[$loc][$drc]) {
+		for (my $loc = $self->loc_directions->[$src][$drc];
+			$loc != NL; $loc = $self->loc_directions->[$loc][$drc]
+		) {
 			if ($loc == $dst) {
 				return $figures > 1 ? ML : $figures == 1 ? $figure : NL;
 			}

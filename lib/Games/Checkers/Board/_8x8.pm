@@ -13,19 +13,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package Games::Checkers::BoardConstants;
+package Games::Checkers::Board::_8x8;
 
-use constant NL => 32;
+use strict;
+use warnings;
 
-use Games::Checkers::DeclareConstant {
-	MAX_LOCATION => 31,
-	NL => NL,      # no location
-	ML => NL + 1,  # multiple locations
-	DIRECTION_NUM => 4,
-	DEFAULT_LEVEL => 3,
-};
+use base 'Games::Checkers::Board';
+use Games::Checkers::Constants;
 
-use Games::Checkers::DeclareConstant loc_directions => [
+use constant loc_directions => [
 	[ NL,  4, NL, NL], [  4,  5, NL, NL], [  5,  6, NL, NL], [  6,  7, NL, NL],
 	[  8,  9,  0,  1], [  9, 10,  1,  2], [ 10, 11,  2,  3], [ 11, NL,  3, NL],
 	[ NL, 12, NL,  4], [ 12, 13,  4,  5], [ 13, 14,  5,  6], [ 14, 15,  6,  7],
@@ -36,13 +32,29 @@ use Games::Checkers::DeclareConstant loc_directions => [
 	[ NL, NL, 24, 25], [ NL, NL, 25, 26], [ NL, NL, 26, 27], [ NL, NL, 27, NL],
 ];
 
-use Games::Checkers::DeclareConstant convert_type => [
-	#     pawn         king
-	[ 0xF0000000, 0x00000000 ],  # white
-	[ 0x0000000F, 0x00000000 ],  # black
+use constant is_crowning => [
+[
+	0, 0, 0, 0,
+	0, 0, 0, 0,
+	0, 0, 0, 0,
+	0, 0, 0, 0,
+	0, 0, 0, 0,
+	0, 0, 0, 0,
+	0, 0, 0, 0,
+	1, 1, 1, 1,
+], [
+	1, 1, 1, 1,
+	0, 0, 0, 0,
+	0, 0, 0, 0,
+	0, 0, 0, 0,
+	0, 0, 0, 0,
+	0, 0, 0, 0,
+	0, 0, 0, 0,
+	0, 0, 0, 0,
+]
 ];
 
-use Games::Checkers::DeclareConstant pawn_step => [
+use constant pawn_step => [
 [
 	[ NL,  4], [  4,  5], [  5,  6], [  6,  7],
 	[  8,  9], [  9, 10], [ 10, 11], [ 11, NL],
@@ -64,7 +76,7 @@ use Games::Checkers::DeclareConstant pawn_step => [
 ]
 ];
 
-use Games::Checkers::DeclareConstant pawn_beat => [
+use constant pawn_beat => [
 	[ NL,  9, NL, NL], [  8, 10, NL, NL], [  9, 11, NL, NL], [ 10, NL, NL, NL],
 	[ NL, 13, NL, NL], [ 12, 14, NL, NL], [ 13, 15, NL, NL], [ 14, NL, NL, NL],
 	[ NL, 17, NL,  1], [ 16, 18,  0,  2], [ 17, 19,  1,  3], [ 18, NL,  2, NL],
@@ -75,7 +87,7 @@ use Games::Checkers::DeclareConstant pawn_beat => [
 	[ NL, NL, NL, 21], [ NL, NL, 20, 22], [ NL, NL, 21, 23], [ NL, NL, 22, NL],
 ];
 
-use Games::Checkers::DeclareConstant king_step => [
+use constant king_step => [
 	[  4,  9, 13, 18, 22, 27, 31, NL, NL, NL, NL, NL, NL],
 	[  4,  8,  5, 10, 14, 19, 23, NL, NL, NL, NL, NL, NL],
 	[  5,  9, 12, 16,  6, 11, 15, NL, NL, NL, NL, NL, NL],
@@ -110,7 +122,7 @@ use Games::Checkers::DeclareConstant king_step => [
 	[ 27, 22, 18, 13,  9,  4,  0, NL, NL, NL, NL, NL, NL],
 ];
 
-use Games::Checkers::DeclareConstant king_beat => [
+use constant king_beat => [
 	[  9, 13, 18, 22, 27, 31, NL, NL, NL],
 	[  8, 10, 14, 19, 23, NL, NL, NL, NL],
 	[  9, 12, 16, 11, 15, NL, NL, NL, NL],
