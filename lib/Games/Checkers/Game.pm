@@ -31,7 +31,7 @@ sub new ($%) {
 	$ENV{DUMB_CHARS} = 1 if $params{dumb_chars};
 
 	my $title = $params{title} || "Unknown White - Unknown Black";
-	my $board = Games::Checkers::Board->new($params{board});
+	my $board = Games::Checkers::Board->new($params{board}, $params{size});
 	my $color = $params{black} ? Black : $params{color} || White;
 
 	# probe and use if available

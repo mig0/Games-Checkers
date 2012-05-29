@@ -554,10 +554,10 @@ sub dump ($;$$$) {
 
 	my $str = "";
 	$str .= "\n";
-	$str .= "  " . $ch{tlc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{htl}" x $size_x_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{trc}\n"
+	$str .= "   " . $ch{tlc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{htl}" x $size_x_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{trc}\n"
 		unless $compact;
 	for (my $i = 0; $i < $size_y; $i++) {
-		$str .= ($size_y - $i) . " $ch{vcl}";
+		$str .= sprintf("%2d", $size_y - $i) . " $ch{vcl}";
 		for (my $j = 0; $j < $size_x; $j++) {
 			my $is_used = ($i + $j) % 2;
 			if (($i + $j) % 2) {
@@ -575,15 +575,15 @@ sub dump ($;$$$) {
 			$str .= $ch{vcl};
 		}
 		$str .= "\n";
-		$str .= "  " . $ch{vll} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{ccl}" x $size_x_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{vrl}\n"
+		$str .= "   " . $ch{vll} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{ccl}" x $size_x_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{vrl}\n"
 			unless $compact || $i == $size_y_1;
 	}
-	$str .= "  " . $ch{blc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{hbl}" x $size_x_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{brc}\n"
+	$str .= "   " . $ch{blc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{hbl}" x $size_x_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{brc}\n"
 		unless $compact;
-   $str .= "    " . join('', map { $self->ind_to_chr($_) . "   " } 1 .. $size_x) . "\n";
+   $str .= "     " . join('', map { $self->ind_to_chr($_) . "   " } 1 .. $size_x) . "\n";
 	$str .= "\n" unless $compact;
 
-	$str =~ s/(?:\e\)0)?((?:\e.*?m)*.(?:\e.*?m)*)(\016.\017|.)((?:\e.*?m)*)(\016.\017|.)((?:\e.*?m)*)(\016.\017|.)((?:\e.*?m)*)/$1$3$5$7/g
+	$str =~ s/(?:^.|)(?:\e\)0)?((?:\e.*?m)*.(?:\e.*?m)*)(\016.\017|.)((?:\e.*?m)*)(\016.\017|.)((?:\e.*?m)*)(\016.\017|.)((?:\e.*?m)*)/$1$3$5$7/mg
 		if $compact;
 
 	# prepare prefix for each board line, if any
