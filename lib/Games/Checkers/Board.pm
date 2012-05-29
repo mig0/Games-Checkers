@@ -336,6 +336,28 @@ sub get_cost ($$) {
 		+ ($turn == White ? 1 : -1);
 }
 
+sub step_destinations ($$;$$) {
+	my $self = shift;
+	my $loc = shift;
+	my $piece = shift;
+	my $color = shift;
+
+	(defined $piece ? $piece : $self->piece($loc)) == Pawn
+		? $self->pawn_step->[defined $color ? $color : $self->color($loc)][$loc]
+		: $self->king_step->[$loc];
+}
+
+sub beat_destinations ($$;$$) {
+	my $self = shift;
+	my $loc = shift;
+	my $piece = shift;
+	my $color = shift;
+
+	(defined $piece ? $piece : $self->piece($loc)) == Pawn
+		? $self->pawn_beat->[$loc]
+		: $self->king_beat->[$loc];
+}
+
 sub apply_move ($) {
 	my $self = shift;
 	my $move = shift;
@@ -368,12 +390,7 @@ sub can_piece_step ($$;$) {
 		&DIE_WITH_STACK();
 		return No;
 	}
-	my $color = $self->color($loc);
-	my $step_dst = $self->piece($loc) == Pawn
-		? Games::Checkers::PawnStepIterator->new($self, $loc, $color)
-		: Games::Checkers::KingStepIterator->new($self, $loc, $color);
-	while ($step_dst->left) {
-		my $loc2 = $step_dst->next;
+	for my $loc2 (@{$self->step_destinations($loc)}) {
 		next if $locd != NL && $locd != $loc2;
 		next if $self->figure_between($loc, $loc2) != NL;
 		return Yes unless $self->occup($loc2);
@@ -393,11 +410,7 @@ sub can_piece_beat ($$;$) {
 		return No;
 	}
 	my $color = $self->color($loc);
-	my $beat_dst = $self->piece($loc) == Pawn
-		? Games::Checkers::PawnBeatIterator->new($self, $loc, $color)
-		: Games::Checkers::KingBeatIterator->new($self, $loc, $color);
-	while ($beat_dst->left) {
-		my $loc2 = $beat_dst->next;
+	for my $loc2 (@{$self->beat_destinations($loc)}) {
 		next if $locd != NL && $locd != $loc2;
 		my $loc1 = $self->figure_between($loc, $loc2);
 		next if $loc1 == NL || $loc1 == ML;

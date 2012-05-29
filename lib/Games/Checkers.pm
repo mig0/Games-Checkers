@@ -238,22 +238,16 @@ forward directions.
     Games::Checkers::FigureIterator
     Games::Checkers::Game
     Games::Checkers::Iterators
-    Games::Checkers::KingBeatIterator
-    Games::Checkers::KingStepIterator
     Games::Checkers::LocationIterator
     Games::Checkers::Move
     Games::Checkers::MoveConstants
     Games::Checkers::MoveListNode
     Games::Checkers::MoveLocationConstructor
     Games::Checkers::PDNParser
-    Games::Checkers::PawnBeatIterator
-    Games::Checkers::PawnStepIterator
-    Games::Checkers::PieceRuleIterator
     Games::Checkers::Player
     Games::Checkers::PlayerConstants
     Games::Checkers::SDL
     Games::Checkers::UserPlayer
-    Games::Checkers::ValidKingBeatIterator
 
 =head1 SEE ALSO
 
