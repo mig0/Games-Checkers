@@ -89,8 +89,12 @@ not implemented yet.
 
 Currently supported board sizes:
 
+	* 4x4, 6x6, 8x10 (just for fun)
 	* 8x8
-	* 10x10 (not yet, but will be soon hopefully)
+	* 10x8
+	* 10x10
+	* 12x12
+	* 14x14, 16x16 (not too practical)
 
 Currently supported variants:
 
