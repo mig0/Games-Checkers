@@ -111,22 +111,6 @@ sub new ($;$$) {
 	return $self->init($board_or_locs);
 }
 
-sub locs ($) {
-	return 32;
-}
-
-sub size_x ($) {
-	return 8;
-}
-
-sub size_y ($) {
-	return 8;
-}
-
-sub default_rows ($) {
-	return 3;
-}
-
 sub notation ($) {
 	# BL - 0, BR - 1, TL - 2, TR - 3
 	return $ENV{ITALIAN_BOARD_NOTATION} ? 3 : 1;
