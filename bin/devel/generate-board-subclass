@@ -1,0 +1,145 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+my $size_x = shift || die "Pass size_x\n";
+my $size_y = shift || die "Pass size_y\n";
+
+my $size_x_2 = $size_x / 2;
+
+my $locs = $size_x * $size_y / 2;
+my $size = $size_x > $size_y ? $size_y : $size_x;
+my $default_rows = $size_y / 2 - 1;
+
+sub loc_to_arr ($) {
+	my $loc = shift;
+	return (int($loc % $size_x_2) * 2 + int(($loc / $size_x_2) % 2) + 1, int($loc / $size_x_2) + 1);
+}
+
+sub arr_to_loc ($$) {
+	my ($x, $y) = @_;
+	return 'NL' if $x < 1 || $x > $size_x || $y < 1 || $y > $size_y;
+	die if ($x + $y) % 2;
+	return sprintf "%2d", int(($x - 1) / 2) + ($y - 1) * $size_x_2;
+}
+
+sub format_items ($) {
+	my $items = shift || die;
+
+	return "\t[ " . join(', ',
+		map { ref($_) eq 'ARRAY' ? '[ ' . join(', ', @$_) . ' ]' : $_ } @$items
+	) . " ],\n";
+}
+
+sub format_bunches ($) {
+	my $items = shift || die;
+
+	die "Internal: Number of items for bunches is less than $size_x_2\n"
+		if @$items < $size_x_2;
+
+	my $str = "\t" . join(', ',
+		map { ref($_) eq 'ARRAY' ? '[ ' . join(', ', @$_) . ' ]' : $_ } @$items[0 .. $size_x_2 - 1]
+	) . ",\n";
+
+	$str .=
+		&format_bunches([ @$items[$size_x_2 .. @$items - 1] ])
+		if @$items > $size_x_2;
+
+	return $str;
+}
+
+my @loc_direction_locs;
+my @pawn_step_locs = ([], []);
+my @pawn_beat_locs;
+my $king_step_str;
+my $king_beat_str;
+
+for (0 .. $locs - 1) {
+	my ($x, $y) = loc_to_arr($_);
+	my @king_step_locs;
+	my @king_beat_locs;
+	for my $i (1 .. $size - 1) {
+		my $l1 = arr_to_loc($x - $i, $y + $i);
+		my $l2 = arr_to_loc($x + $i, $y + $i);
+		my $l3 = arr_to_loc($x - $i, $y - $i);
+		my $l4 = arr_to_loc($x + $i, $y - $i);
+		push @loc_direction_locs, [ $l1, $l2, $l3, $l4 ] if $i == 1;
+		push @{$pawn_step_locs[0]}, [ $l1, $l2 ] if $i == 1;
+		push @{$pawn_step_locs[1]}, [ $l3, $l4 ] if $i == 1;
+		push @pawn_beat_locs, [ $l1, $l2, $l3, $l4 ] if $i == 2;
+		push @king_step_locs, $l1, $l2, $l3, $l4;
+		push @king_beat_locs, $l1, $l2, $l3, $l4 if $i > 1;
+	}
+	$king_step_str .= format_items(\@king_step_locs);
+	$king_beat_str .= format_items(\@king_beat_locs);
+}
+
+my $loc_directions_str =
+	format_bunches(\@loc_direction_locs);
+my @is_crowning_strs = (
+	format_bunches([ (0) x ($locs - $size_x_2), (1) x $size_x_2 ]),
+	format_bunches([ (1) x $size_x_2, (0) x ($locs - $size_x_2) ]),
+);
+my @pawn_step_strs = (
+	format_bunches($pawn_step_locs[0]),
+	format_bunches($pawn_step_locs[1]),
+);
+my $pawn_beat_str =
+	format_bunches(\@pawn_beat_locs);
+
+print <<ENDS;
+# Games::Checkers, Copyright (C) 1996-2012 Mikhael Goikhman, migo\@cpan.org
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+package Games::Checkers::Board::_${size_x}x$size_y;
+
+use strict;
+use warnings;
+
+use base 'Games::Checkers::Board';
+use Games::Checkers::Constants;
+
+use constant size_x => $size_x;
+use constant size_y => $size_y;
+use constant locs => $locs;
+use constant default_rows => $default_rows;
+
+use constant loc_directions => [
+$loc_directions_str];
+
+use constant is_crowning => [
+[
+$is_crowning_strs[0]], [
+$is_crowning_strs[1]]
+];
+
+use constant pawn_step => [
+[
+$pawn_step_strs[0]], [
+$pawn_step_strs[1]]
+];
+
+use constant pawn_beat => [
+$pawn_beat_str];
+
+use constant king_step => [
+$king_step_str];
+
+use constant king_beat => [
+$king_beat_str];
+
+1;
+ENDS
