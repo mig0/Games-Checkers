@@ -224,7 +224,15 @@ forward directions.
 
     Games::Checkers
     Games::Checkers::Board
+    Games::Checkers::Board::_4x4
+    Games::Checkers::Board::_6x6
     Games::Checkers::Board::_8x8
+    Games::Checkers::Board::_8x10
+    Games::Checkers::Board::_10x8
+    Games::Checkers::Board::_10x10
+    Games::Checkers::Board::_12x12
+    Games::Checkers::Board::_14x14
+    Games::Checkers::Board::_16x16
     Games::Checkers::BoardTree
     Games::Checkers::BoardTreeNode
     Games::Checkers::CompPlayer
