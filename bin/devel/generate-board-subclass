@@ -24,16 +24,30 @@ sub arr_to_loc ($$) {
 	return sprintf "%2d", int(($x - 1) / 2) + ($y - 1) * $size_x_2;
 }
 
-sub format_items ($) {
-	my $items = shift || die;
-
-	return "\t[ " . join(', ',
-		map { ref($_) eq 'ARRAY' ? '[ ' . join(', ', @$_) . ' ]' : $_ } @$items
-	) . " ],\n";
+sub strip_nl ($) {
+	my $str = shift;
+	$str =~ s/NL/  /g;
+	$str =~ s/ ,/  /g;
+	$str =~ s/,( +])/ $1/g;
+	return $str;
 }
 
-sub format_bunches ($) {
+sub format_items ($;$$) {
 	my $items = shift || die;
+	my $prefix = shift || '';
+	my $inline = shift || 0;
+
+	my $str = strip_nl("$prefix\[ " . join(', ',
+		map { ref($_) eq 'ARRAY' ? '[ ' . join(', ', @$_) . ' ]' : $_ } @$items
+	) . " ]");
+	$str = "\t$str,\n" unless $inline;
+
+	return $str;
+}
+
+sub format_bunches ($;$) {
+	my $items = shift || die;
+	my $leave_nl = shift || 0;
 
 	die "Internal: Number of items for bunches is less than $size_x_2\n"
 		if @$items < $size_x_2;
@@ -41,9 +55,10 @@ sub format_bunches ($) {
 	my $str = "\t" . join(', ',
 		map { ref($_) eq 'ARRAY' ? '[ ' . join(', ', @$_) . ' ]' : $_ } @$items[0 .. $size_x_2 - 1]
 	) . ",\n";
+	$str = strip_nl($str) unless $leave_nl;
 
 	$str .=
-		&format_bunches([ @$items[$size_x_2 .. @$items - 1] ])
+		&format_bunches([ @$items[$size_x_2 .. @$items - 1] ], $leave_nl)
 		if @$items > $size_x_2;
 
 	return $str;
@@ -54,11 +69,17 @@ my @pawn_step_locs = ([], []);
 my @pawn_beat_locs;
 my $king_step_str;
 my $king_beat_str;
+my $enclosed_locs_str;
 
 for (0 .. $locs - 1) {
 	my ($x, $y) = loc_to_arr($_);
 	my @king_step_locs;
 	my @king_beat_locs;
+	my %enclosed_locs;
+	my @enclosed_locs1 = ();
+	my @enclosed_locs2 = ();
+	my @enclosed_locs3 = ();
+	my @enclosed_locs4 = ();
 	for my $i (1 .. $size - 1) {
 		my $l1 = arr_to_loc($x - $i, $y + $i);
 		my $l2 = arr_to_loc($x + $i, $y + $i);
@@ -70,13 +91,28 @@ for (0 .. $locs - 1) {
 		push @pawn_beat_locs, [ $l1, $l2, $l3, $l4 ] if $i == 2;
 		push @king_step_locs, $l1, $l2, $l3, $l4;
 		push @king_beat_locs, $l1, $l2, $l3, $l4 if $i > 1;
+		@enclosed_locs1 = () if $l1 eq 'NL';
+		@enclosed_locs2 = () if $l2 eq 'NL';
+		@enclosed_locs3 = () if $l3 eq 'NL';
+		@enclosed_locs4 = () if $l4 eq 'NL';
+		$enclosed_locs{$l1} = [ @enclosed_locs1 ] if @enclosed_locs1;
+		$enclosed_locs{$l2} = [ @enclosed_locs2 ] if @enclosed_locs2;
+		$enclosed_locs{$l3} = [ @enclosed_locs3 ] if @enclosed_locs3;
+		$enclosed_locs{$l4} = [ @enclosed_locs4 ] if @enclosed_locs4;
+		push @enclosed_locs1, $l1 if $l1 ne 'NL';
+		push @enclosed_locs2, $l2 if $l2 ne 'NL';
+		push @enclosed_locs3, $l3 if $l3 ne 'NL';
+		push @enclosed_locs4, $l4 if $l4 ne 'NL';
 	}
 	$king_step_str .= format_items(\@king_step_locs);
 	$king_beat_str .= format_items(\@king_beat_locs);
+	$enclosed_locs_str .= "\t{ " . join(', ', map {
+		format_items($enclosed_locs{$_}, "$_ => ", 1)
+	} sort { $a <=> $b } keys %enclosed_locs) . " },\n";
 }
 
 my $loc_directions_str =
-	format_bunches(\@loc_direction_locs);
+	format_bunches(\@loc_direction_locs, 1);
 my @is_crowning_strs = (
 	format_bunches([ (0) x ($locs - $size_x_2), (1) x $size_x_2 ]),
 	format_bunches([ (1) x $size_x_2, (0) x ($locs - $size_x_2) ]),
@@ -140,6 +176,9 @@ $king_step_str];
 
 use constant king_beat => [
 $king_beat_str];
+
+use constant enclosed_locs => [
+$enclosed_locs_str];
 
 1;
 ENDS

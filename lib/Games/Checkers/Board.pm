@@ -376,7 +376,7 @@ sub apply_move ($) {
 	for (my $n = 0; $dst != NL; $src = $dst, $dst = $move->destin(++$n)) {
 		$self->clr($src);
 		$self->set($dst, $color, $piece);
-		$self->clr($self->figure_between($src, $dst)) if $beat;
+		$self->clr($self->enclosed_figure($src, $dst)) if $beat;
 		# convert to king if needed
 		if ($piece == Pawn && $self->is_crowning->[$color][$dst]) {
 			$self->cnv($dst);
@@ -398,8 +398,8 @@ sub can_piece_step ($$;$) {
 	}
 	for my $loc2 (@{$self->step_destinations($loc)}) {
 		next if $locd != NL && $locd != $loc2;
-		next if $self->figure_between($loc, $loc2) != NL;
-		return Yes unless $self->occup($loc2);
+		next if $self->occup($loc2);
+		return Yes if $self->enclosed_figure($loc, $loc2) == NL;
 	}
 	return No;
 }
@@ -418,10 +418,10 @@ sub can_piece_beat ($$;$) {
 	my $color = $self->color($loc);
 	for my $loc2 (@{$self->beat_destinations($loc)}) {
 		next if $locd != NL && $locd != $loc2;
-		my $loc1 = $self->figure_between($loc, $loc2);
+		next if $self->occup($loc2);
+		my $loc1 = $self->enclosed_figure($loc, $loc2);
 		next if $loc1 == NL || $loc1 == ML;
-		return Yes unless $self->occup($loc2) ||
-			!$self->occup($loc1) || $self->color($loc1) == $color;
+		return Yes if $self->occup($loc1) && $self->color($loc1) != $color;
 	}
 	return No;
 }
@@ -452,28 +452,23 @@ sub can_color_move ($$) {
 	return $self->can_color_beat($color) || $self->can_color_step($color);
 }
 
-sub figure_between ($$$) {
+sub enclosed_figure ($$$) {
 	my $self = shift;
 	my $src = shift;
 	my $dst = shift;
 
-	my $num_directions = @{$self->loc_directions->[$src]};
-	for (my $drc = 0; $drc < $num_directions; $drc++) {
-		my $figures = 0;
-		my $figure = NL;
-		for (my $loc = $self->loc_directions->[$src][$drc];
-			$loc != NL; $loc = $self->loc_directions->[$loc][$drc]
-		) {
-			if ($loc == $dst) {
-				return $figures > 1 ? ML : $figures == 1 ? $figure : NL;
-			}
-			if ($self->occup($loc)) {
-				$figure = $loc;
-				$figures++;
-			}
+	my $locs = $self->enclosed_locs->[$src]{$dst}
+		or return NL;
+
+	my $figure_loc = NL;
+	for my $loc (@$locs) {
+		if ($self->occup($loc)) {
+			return ML if $figure_loc != NL;
+			$figure_loc = $loc;
 		}
 	}
-	return NL;
+
+	return $figure_loc;
 }
 
 #

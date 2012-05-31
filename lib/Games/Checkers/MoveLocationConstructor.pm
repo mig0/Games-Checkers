@@ -121,7 +121,7 @@ sub apply_last_dst ($) {
 	my $dst = $self->dst_1;
 	$board->clr($src);
 	$board->set($dst, $self->{color}, $self->{piece});
-	$board->clr($board->figure_between($src, $dst)) if $self->{must_beat};
+	$board->clr($board->enclosed_figure($src, $dst)) if $self->{must_beat};
 	if ($self->{piece} == Pawn && $board->is_crowning->[$self->{color}][$dst]) {
 		$board->cnv($dst);
 		$self->{piece} ^= 1;

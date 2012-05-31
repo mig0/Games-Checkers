@@ -55,7 +55,6 @@ sub build_continue ($) {
 	my $destinations = $self->{work_board}->$method($self->dst_1, $self->{piece}, $self->{color});
 
 	for my $dst (@$destinations) {
-		next if $dst == NL;
 		next if $self->add_dst($dst) == Err;
 		if ($self->can_create_move) {
 			$self->{status} = $self->gather_move;

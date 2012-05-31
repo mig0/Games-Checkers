@@ -49,45 +49,56 @@ use constant is_crowning => [
 
 use constant pawn_step => [
 [
-	[ NL,  2 ], [  2,  3 ],
-	[  4,  5 ], [  5, NL ],
-	[ NL,  6 ], [  6,  7 ],
-	[ NL, NL ], [ NL, NL ],
+	[      2 ], [  2,  3 ],
+	[  4,  5 ], [  5     ],
+	[      6 ], [  6,  7 ],
+	[        ], [        ],
 ], [
-	[ NL, NL ], [ NL, NL ],
-	[  0,  1 ], [  1, NL ],
-	[ NL,  2 ], [  2,  3 ],
-	[  4,  5 ], [  5, NL ],
+	[        ], [        ],
+	[  0,  1 ], [  1     ],
+	[      2 ], [  2,  3 ],
+	[  4,  5 ], [  5     ],
 ]
 ];
 
 use constant pawn_beat => [
-	[ NL,  5, NL, NL ], [  4, NL, NL, NL ],
-	[ NL,  7, NL, NL ], [  6, NL, NL, NL ],
-	[ NL, NL, NL,  1 ], [ NL, NL,  0, NL ],
-	[ NL, NL, NL,  3 ], [ NL, NL,  2, NL ],
+	[      5         ], [  4             ],
+	[      7         ], [  6             ],
+	[              1 ], [          0     ],
+	[              3 ], [          2     ],
 ];
 
 use constant king_step => [
-	[ NL,  2, NL, NL, NL,  5, NL, NL, NL,  7, NL, NL ],
-	[  2,  3, NL, NL,  4, NL, NL, NL, NL, NL, NL, NL ],
-	[  4,  5,  0,  1, NL,  7, NL, NL, NL, NL, NL, NL ],
-	[  5, NL,  1, NL,  6, NL, NL, NL, NL, NL, NL, NL ],
-	[ NL,  6, NL,  2, NL, NL, NL,  1, NL, NL, NL, NL ],
-	[  6,  7,  2,  3, NL, NL,  0, NL, NL, NL, NL, NL ],
-	[ NL, NL,  4,  5, NL, NL, NL,  3, NL, NL, NL, NL ],
-	[ NL, NL,  5, NL, NL, NL,  2, NL, NL, NL,  0, NL ],
+	[      2,              5,              7         ],
+	[  2,  3,          4                             ],
+	[  4,  5,  0,  1,      7                         ],
+	[  5,      1,      6                             ],
+	[      6,      2,              1                 ],
+	[  6,  7,  2,  3,          0                     ],
+	[          4,  5,              3                 ],
+	[          5,              2,              0     ],
 ];
 
 use constant king_beat => [
-	[ NL,  5, NL, NL, NL,  7, NL, NL ],
-	[  4, NL, NL, NL, NL, NL, NL, NL ],
-	[ NL,  7, NL, NL, NL, NL, NL, NL ],
-	[  6, NL, NL, NL, NL, NL, NL, NL ],
-	[ NL, NL, NL,  1, NL, NL, NL, NL ],
-	[ NL, NL,  0, NL, NL, NL, NL, NL ],
-	[ NL, NL, NL,  3, NL, NL, NL, NL ],
-	[ NL, NL,  2, NL, NL, NL,  0, NL ],
+	[      5,              7         ],
+	[  4                             ],
+	[      7                         ],
+	[  6                             ],
+	[              1                 ],
+	[          0                     ],
+	[              3                 ],
+	[          2,              0     ],
+];
+
+use constant enclosed_locs => [
+	{  5 => [  2 ],  7 => [  2,  5 ] },
+	{  4 => [  2 ] },
+	{  7 => [  5 ] },
+	{  6 => [  5 ] },
+	{  1 => [  2 ] },
+	{  0 => [  2 ] },
+	{  3 => [  5 ] },
+	{  0 => [  5,  2 ],  2 => [  5 ] },
 ];
 
 1;
