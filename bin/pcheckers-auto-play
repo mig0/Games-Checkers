@@ -52,7 +52,7 @@ sub show_help (;$) {
 			-s --size SIZE     specify the board size, like "12" or "10x8"
 			-e --edit          allow editing board pieces before the start
 			-b --board STR     init board with non-default setup, like "b4,d2/a3/h6"
-			-B --black         start game with the Black pieces, not White
+			-B --black         cause pieces of the opposite color to start the game
 			-l --level N       strength level (default: $level)
 			-d --delay N       pause in seconds between the moves (default: $delay)
 			-r --random [w|b]  perform random (not best) moves for both/white/black

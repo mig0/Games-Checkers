@@ -18,6 +18,7 @@ use warnings;
 
 package Games::Checkers::Game;
 
+use Games::Checkers::Rules;
 use Games::Checkers::Board;
 use Games::Checkers::Constants;
 use Games::Checkers::BoardTree;
@@ -28,11 +29,14 @@ sub new ($%) {
 	my $class = shift;
 	my %params = @_;
 
+	Games::Checkers::Rules::set_variant($params{variant});
+
 	$ENV{DUMB_CHARS} = 1 if $params{dumb_chars};
 
 	my $title = $params{title} || "Unknown White - Unknown Black";
 	my $board = Games::Checkers::Board->new($params{board}, $params{size});
-	my $color = $params{black} ? Black : $params{color} || White;
+	my $color = defined $params{color} ? $params{color} :
+		$::RULES{WHITE_STARTS} ^ ($params{black} || 0) ? White : Black;
 
 	# probe and use if available
 	my $frontend = !($params{use_term} || $ENV{USE_TERM}) && eval q{
