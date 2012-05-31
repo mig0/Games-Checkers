@@ -98,6 +98,8 @@ sub new ($;$$) {
 	my $size = shift;
 
 	if ($class eq __PACKAGE__) {
+		$size ||= $board_or_locs->size
+			if ref($board_or_locs) && $board_or_locs->isa('Games::Checkers::Board');
 		$size ||= 8;
 		$size = "${size}x$size" if $size =~ /^\d+$/;
 		$class = __PACKAGE__ . "::_$size";
@@ -114,6 +116,10 @@ sub new ($;$$) {
 sub notation ($) {
 	# BL - 0, BR - 1, TL - 2, TR - 3
 	return $ENV{ITALIAN_BOARD_NOTATION} ? 3 : 1;
+}
+
+sub size ($) {
+	return $_[0]->size_x . "x" . return $_[0]->size_y;
 }
 
 sub size_x_1 ($) {

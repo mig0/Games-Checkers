@@ -8,7 +8,7 @@ use lib "$FindBin::Bin/../lib";
 
 use Games::Checkers::Game;
 
-my $board = Games::Checkers::Board->new($ENV{BOARD});
+my $board = Games::Checkers::Board->new($ENV{BOARD}, $ENV{BOARD_SIZE});
 my $game = Games::Checkers::Game->new(
 	board => $board,
 	title => "Cost: " . $board->get_cost($ENV{BLACK} || 0),
