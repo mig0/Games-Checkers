@@ -94,17 +94,21 @@ sub next_record ($) {
 	my @move_verge_strings = split(/(?:\s+|\d+\.\s*)+/, $move_string);
 	shift @move_verge_strings while @move_verge_strings && !$move_verge_strings[0];
 
-	my @move_verge_trios = map {
-		/^((\d+)|\w\d)([x:*-])((\d+)|\w\d)$/i
-			|| die $self->error_prefix . "\tIncorrect move notation ($_)\n";
+	# tolerate some broken PDNs with no real moves, like: 1. - - 2. - -
+	pop @move_verge_strings while @move_verge_strings && $move_verge_strings[0] eq '-';
+
+	my @move_verges = map {
+		die $self->error_prefix . "\tIncorrect move notation ($_)\n"
+			unless /^(\d+|\w\d)([x:*-])(\d+|\w\d)((?!-)\2(\d+|\w\d))*$/i;
 		[
-			$3 eq "-" ? 0 : 1,
-			defined $2 ? $board->num_to_loc($1) : $board->str_to_loc($1),
-			defined $5 ? $board->num_to_loc($4) : $board->str_to_loc($4),
+			$2 eq "-" ? 0 : 1,
+			map {
+				/^\d+$/ ? $board->num_to_loc($_) : $board->str_to_loc($_)
+			} split(/[x:*-]/)
 		]
 	} @move_verge_strings;
 
-	return [ \@move_verge_trios, $record_values, $board ];
+	return [ \@move_verges, $record_values, $board ];
 }
 
 1;

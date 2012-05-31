@@ -188,14 +188,14 @@ sub choose_move ($) {
 	return $move;
 }
 
-sub create_move ($$$$) {
+sub create_move ($$$@) {
 	my $self = shift;
 	my $is_beat = shift;
 	my $src = shift;
-	my $dst = shift;
+	my @dsts = @_;
 
 	my $creating_move = Games::Checkers::CreateVergeMove->new(
-		$self->{board}, $self->{color}, $is_beat, $src, $dst
+		$self->{board}, $self->{color}, $is_beat, $src, @dsts
 	);
 	die "Internal problem" unless $creating_move->status == Ok;
 	my $move = $creating_move->get_move;

@@ -139,6 +139,7 @@ sub new ($$$$$$) {
 	my $is_beat = $self->{is_beat} = shift;
 	my $src = $self->{src0} = shift;
 	my $dst = $self->{dst0} = shift;
+	my @extra_dsts = @_;
 
 	die "Bad verge move source location ($src): not occupied\n"
 		unless $board->occup($src);
@@ -151,6 +152,8 @@ sub new ($$$$$$) {
 
 	if (!$is_beat) {
 		if ($board->can_piece_step($src, $dst)) {
+			die "Bad verge move ($src-$dst): extra destinations @extra_dsts given\n"
+				if @extra_dsts;
 			$self->{move} = new Games::Checkers::Move($is_beat, $src, [$dst]);
 			return $self;
 		}
@@ -162,7 +165,7 @@ sub new ($$$$$$) {
 	# support British rules
 	if ($is_beat) {
 		if ($board->can_piece_beat($src, $dst)) {
-			$self->{move} = new Games::Checkers::Move($is_beat, $src, [$dst]);
+			$self->{move} = new Games::Checkers::Move($is_beat, $src, [$dst, @extra_dsts]);
 			return $self;
 		}
 	}

@@ -92,7 +92,7 @@ my $game_count = 0;
 while (my $pdn_record = $pdn_parser->next_record) {
 	$game_count++;
 	next if $game_count < $game_start;
-	my ($move_verge_trios, $values) = @$pdn_record;
+	my ($move_verges, $values) = @$pdn_record;
 
 	my $game = Games::Checkers::Game->new(
 		title => ($values->{White} || "???") . ' - ' . ($values->{Black} || "???"),
@@ -107,14 +107,14 @@ while (my $pdn_record = $pdn_parser->next_record) {
 
 	$game->show_board;
 
-	while (@$move_verge_trios) {
+	while (@$move_verges) {
 		$game->sleep($delay);
 
-		my $move_verge_trio = shift @$move_verge_trios;
-		my ($is_beat, $src, $dst) = @$move_verge_trio;
+		my $move_verge = shift @$move_verges;
+		my ($is_beat, $src, @dsts) = @$move_verge;
 
-		my $move = $game->create_move($is_beat, $src, $dst);
-		die "Corrupt game #$game_count record? Move ($src, $dst) can't be created\n"
+		my $move = $game->create_move($is_beat, $src, @dsts);
+		die "Corrupt game #$game_count record? Move ($src @dsts) can't be created\n"
 			unless $move;
 
 		$game->show_move($move);
