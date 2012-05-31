@@ -161,7 +161,7 @@ sub chr_to_ind ($$) {
 	my $self = shift;
 	my $chr = shift;
 	
-	return ord($chr) - ord('a') + 1 - ($chr ge 'j');
+	return ord(lc($chr)) - ord('a') + 1 - ($chr ge 'j');
 }
 
 sub loc_to_str ($$) {
