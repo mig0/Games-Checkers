@@ -22,8 +22,6 @@ use Games::Checkers::Constants;
 use Games::Checkers::Board;
 use Games::Checkers::MoveConstants;
 
-use constant MAX_MOVE_JUMP_NUM => 9;
-
 sub new ($$$) {
 	my $class = shift;
 	my $board = shift;
@@ -73,7 +71,7 @@ sub add_dst ($$) {
 	my $self = shift;
 	my $dst = shift;
 
-	return Err if $self->{src} == NL || @{$self->{destin}} == MAX_MOVE_JUMP_NUM-1;
+	return Err if $self->{src} == NL || @{$self->{destin}} == 100;
 
 	my $board = $self->{work_board} or die "Internal";
 	if ($self->{must_beat}) {
