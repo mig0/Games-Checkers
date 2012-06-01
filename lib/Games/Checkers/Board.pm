@@ -349,7 +349,9 @@ sub step_destinations ($$;$$) {
 
 	(defined $piece ? $piece : $self->piece($loc)) == Pawn
 		? $self->pawn_step->[defined $color ? $color : $self->color($loc)][$loc]
-		: $self->king_step->[$loc];
+		: $::RULES{KINGS_LONG_RANGED}
+			? $self->king_step->[$loc]
+			: $self->king_step_short->[$loc];
 }
 
 sub beat_destinations ($$;$$) {
@@ -359,8 +361,12 @@ sub beat_destinations ($$;$$) {
 	my $color = shift;
 
 	(defined $piece ? $piece : $self->piece($loc)) == Pawn
-		? $self->pawn_beat->[$loc]
-		: $self->king_beat->[$loc];
+		? $::RULES{PAWNS_CAPTURING_BACKWARDS}
+			? $self->pawn_beat->[$loc]
+			: $self->pawn_beat_forward->[defined $color ? $color : $self->color($loc)][$loc]
+		: $::RULES{KINGS_LONG_RANGED}
+			? $self->king_beat->[$loc]
+			: $self->king_beat_short->[$loc];
 }
 
 sub apply_move ($) {

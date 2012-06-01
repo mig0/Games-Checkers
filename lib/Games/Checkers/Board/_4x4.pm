@@ -68,6 +68,20 @@ use constant pawn_beat => [
 	[              3 ], [          2     ],
 ];
 
+use constant pawn_beat_forward => [
+[
+	[      5 ], [  4     ],
+	[      7 ], [  6     ],
+	[        ], [        ],
+	[        ], [        ],
+], [
+	[        ], [        ],
+	[        ], [        ],
+	[      1 ], [  0     ],
+	[      3 ], [  2     ],
+]
+];
+
 use constant king_step => [
 	[      2,              5,              7         ],
 	[  2,  3,          4                             ],
@@ -88,6 +102,20 @@ use constant king_beat => [
 	[          0                     ],
 	[              3                 ],
 	[          2,              0     ],
+];
+
+use constant king_step_short => [
+	[      2         ], [  2,  3         ],
+	[  4,  5,  0,  1 ], [  5,      1     ],
+	[      6,      2 ], [  6,  7,  2,  3 ],
+	[          4,  5 ], [          5     ],
+];
+
+use constant king_beat_short => [
+	[      5         ], [  4             ],
+	[      7         ], [  6             ],
+	[              1 ], [          0     ],
+	[              3 ], [          2     ],
 ];
 
 use constant enclosed_locs => [
