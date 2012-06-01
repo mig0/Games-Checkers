@@ -75,17 +75,17 @@ sub next_record ($) {
 	while (!$move_string || ($line = $self->{fd}->getline) && $self->{lineno}++) {
 		$line =~ s/[\r\n]+$/ /;
 		$move_string .= $line;
-		last if $line =~ /$result/;
+		last if $line =~ /$result\s*$/;
 
 		# tolerate some broken PDNs without trailing result separator
-		my $next_char = $self->{fd}->getc;
+		my $next_char = $self->{fd}->getc || last;
 		$self->{fd}->ungetc(ord($next_char));
 		last if $next_char eq "[";
 	}
 
 	# tolerate some broken PDNs without result separator
-#	die $self->error_prefix . "\tSeparator ($result) is not found from line $lineno\n"
-#		unless $line;
+#	warn $self->error_prefix . "\tSeparator ($result) from line $lineno is not found, continuing anyway\n"
+#		unless $line =~ /$result\s*$/;
 
 	$move_string =~ s/\b$result\b.*//;
 	$move_string =~ s/{[^}]*}//g;  # remove comments
