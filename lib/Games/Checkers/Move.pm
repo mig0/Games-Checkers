@@ -65,7 +65,7 @@ sub dump ($$) {
 	my $self = shift;
 	my $board = shift || die;
 
-	my $delim = $self->is_beat ? ":" : "-";
+	my $delim = $self->is_beat ? $::RULES{CAPTURE_SEPARATOR} || ":" : "-";
 	my $str = $board->loc_to_str($self->source);
 	for (my $i = 0; $i < $self->num_steps; $i++) {
 		$str .= $delim . $board->loc_to_str($self->destin($i));
