@@ -130,7 +130,7 @@ sub new ($$$%) {
 	for my $x (0 .. $size_x - 1) {
 		for my $y (0 .. $size_y - 1) {
 			SDL::Video::blit_surface(
-				$cells[($x + $y) % 2],
+				$cells[($x + $y + 1 + $::RULES{BOTTOM_LEFT_CELL}) % 2],
 				0,
 				$bg,
 				SDL::Rect->new($b_x + 64 * $x, $b_y + 64 * $y, 64, 64)

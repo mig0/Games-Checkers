@@ -139,20 +139,32 @@ sub size_y_1 ($) {
 	return $_[0]->size_y - 1;
 }
 
+sub reflect_x ($$) {
+	my $self = shift;
+	my $x = shift;
+
+	return $::RULES{BOTTOM_LEFT_CELL} ? $x : $self->size_x + 1 - $x;
+}
+
 sub loc_to_arr ($$) {
 	my $self = shift;
 	my $loc = shift;
 
 	my $size_x_2 = $self->size_x_2;
 
-	return (int($loc % $size_x_2) * 2 + int(($loc / $size_x_2) % 2) + 1, int($loc / $size_x_2) + 1);
+	return (
+		$self->reflect_x(int($loc % $size_x_2) * 2 + int(($loc / $size_x_2) % 2) + 1),
+		int($loc / $size_x_2) + 1
+	);
 }
 
 sub arr_to_loc ($$$) {
 	my $self = shift;
-	my ($x, $y) = @_;
+	my $x = $self->reflect_x(shift);
+	my $y = shift;
 
-	return int(($x - 1) / 2) + ($y - 1) * $self->size_x_2;
+	return NL if ($x + $y) % 2;
+	return ($y - 1) * $self->size_x_2 + int(($x - 1) / 2);
 }
 
 sub ind_to_chr ($$) {
@@ -558,18 +570,16 @@ sub dump ($;$$$) {
 	my $size_y   = $self->size_y;
 	my $size_x_1 = $self->size_x_1;
 	my $size_x_2 = $self->size_x_2;
-	my $size_y_1 = $self->size_y_1;
 
 	my $str = "";
 	$str .= "\n";
 	$str .= "   " . $ch{tlc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{htl}" x $size_x_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{trc}\n"
 		unless $compact;
-	for (my $i = 0; $i < $size_y; $i++) {
-		$str .= sprintf("%2d", $size_y - $i) . " $ch{vcl}";
-		for (my $j = 0; $j < $size_x; $j++) {
-			my $is_used = ($i + $j) % 2;
-			if (($i + $j) % 2) {
-				my $loc = ($size_y_1 - $i) * $size_x_2 + int($j / 2);
+	for (my $y = $size_y; $y >= 1; $y--) {
+		$str .= sprintf("%2d", $y) . " $ch{vcl}";
+		for (my $x = 1; $x <= $size_x; $x++) {
+			my $loc = $self->arr_to_loc($x, $y);
+			if ($loc != NL) {
 				my $ch0 = $ch{bcf};
 				my $is_king = $self->piece($loc) == King;
 				$ch0 = $self->white($loc) ? $is_king ? "8" : "O" : $is_king ? "&" : "@"
@@ -584,7 +594,7 @@ sub dump ($;$$$) {
 		}
 		$str .= "\n";
 		$str .= "   " . $ch{vll} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{ccl}" x $size_x_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{vrl}\n"
-			unless $compact || $i == $size_y_1;
+			unless $compact || $y == 1;
 	}
 	$str .= "   " . $ch{blc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{hbl}" x $size_x_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{brc}\n"
 		unless $compact;
