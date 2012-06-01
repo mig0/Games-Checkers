@@ -332,14 +332,13 @@ sub get_cost ($$) {
 	return -1e8 if $white_pawns + $white_kings == 0;
 	return +1e8 if $black_pawns + $black_kings == 0;
 
+	my $king_cost = $::RULES{KINGS_LONG_RANGED} ? $size_y_1 * 40 : 167;
+
 	return
-		+ $white_pawns * 100
-		+ $white_kings * 600
-		+ $white_bonus * 10
-		- $black_pawns * 100
-		- $black_kings * 600
-		- $black_bonus * 10
-		+ ($turn == White ? 1 : -1);
+		+ ($white_pawns - $black_pawns) * 100
+		+ ($white_kings - $black_kings) * $king_cost
+		+ ($white_bonus - $black_bonus) * 10
+		+ ($turn == White ? 5 : -5);
 }
 
 sub step_destinations ($$;$$) {
