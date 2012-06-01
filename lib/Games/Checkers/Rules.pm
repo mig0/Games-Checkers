@@ -63,7 +63,7 @@ our %variant_rules = (
 	english => {
 		base => 'international',
 		BOARD_SIZE                => '8x8',
-		BOARD_NOTATION            => 'A1',
+		BOARD_NOTATION            => 'TL',
 		STARTING_ROWS             => 3,
 		PDN_GAME_TYPE             => 21,
 		WHITE_STARTS              => 0,
@@ -75,7 +75,7 @@ our %variant_rules = (
 	},
 	italian => {
 		base => 'english',
-		BOARD_NOTATION            => 'TL',
+		BOARD_NOTATION            => 'TR',
 		BOTTOM_LEFT_CELL          => 0,
 		PDN_GAME_TYPE             => 22,
 		WHITE_STARTS              => 1,
@@ -152,6 +152,12 @@ our %variant_rules = (
 		base => 'canadian',
 		BOTTOM_LEFT_CELL          => 0,
 		PDN_GAME_TYPE             => 00,
+	},
+	british => {
+		base => 'english',
+	},
+	internt => {
+		base => 'international',
 	},
 	default => {
 		base => 'russian',

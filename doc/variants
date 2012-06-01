@@ -6,9 +6,9 @@ Supported Game Variants
                                              4 CAPTURING_LARGEST
                                           3 PAWNS_CAPTURING_BACKWARDS
                                        2 KINGS_LONG_RANGED
-                                    1 WHITE_STARTS    BOARD BLC NT  S  R CODE
-English Draughts/Americal Checkers  -  -  -  -  -  S   8x8   +  h8  x  3  21
-Italian Checkers                    +  -  -  +* -  S   8x8   -  TL  x  3  22  7
+                                    1 WHITE_STARTS    BOARD BLC NT SEP R CODE
+English Draughts/Americal Checkers  -  -  -  -  -  S   8x8   +  TL  x  3  21
+Italian Checkers                    +  -  -  +* -  S   8x8   -  TR  x  3  22  7
 Spanish Checkers                    +  +  -  +K +  S   8x8   -  BR  x  3  24
 Argentinian Checkers                +  +  -  +K +  S   8x8   -  BR  x  3  --  8
 Portuguese Checkers                 +  +  -  +K +  S   8x8   +  BR  x  3  28

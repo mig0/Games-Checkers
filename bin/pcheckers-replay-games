@@ -84,7 +84,8 @@ $filename ||= "-" unless -t;
 show_help() unless $filename;
 $filename = "$games_dir/$filename" if $filename =~ m!^\w+\/[^\/]+$!;
 
-$ENV{ITALIAN_BOARD_NOTATION} = 1 if $filename =~ m!/italian/!;
+my ($variant) = $filename =~ m!\bgames/(\w+)/[^\/]+$!;
+Games::Checkers::Rules::set_variant($variant);
 
 my $pdn_parser = Games::Checkers::PDNParser->new($filename);
 
@@ -95,6 +96,7 @@ while (my $pdn_record = $pdn_parser->next_record) {
 	my ($move_verges, $values) = @$pdn_record;
 
 	my $game = Games::Checkers::Game->new(
+		variant => $variant,
 		title => ($values->{White} || "???") . ' - ' . ($values->{Black} || "???"),
 		description => join("\n", map {
 			$values->{$_} ? "$_: $values->{$_}" : ()

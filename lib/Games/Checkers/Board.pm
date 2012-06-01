@@ -95,7 +95,7 @@ sub init ($$) {
 sub new ($;$$) {
 	my $class = shift;
 	my $board_or_locs = shift;
-	my $size = shift;
+	my $size = shift || $::RULES{BOARD_SIZE};
 
 	if ($class eq __PACKAGE__) {
 		$size ||= $board_or_locs->size
@@ -114,8 +114,13 @@ sub new ($;$$) {
 }
 
 sub notation ($) {
-	# BL - 0, BR - 1, TL - 2, TR - 3
-	return $ENV{ITALIAN_BOARD_NOTATION} ? 3 : 1;
+	my $bn = $::RULES{BOARD_NOTATION} || 'A1';
+	return
+		$bn eq 'BL' ? 1 :
+		$bn eq 'BR' ? 2 :
+		$bn eq 'TL' ? 3 :
+		$bn eq 'TR' ? 4 :
+		0;
 }
 
 sub size ($) {
@@ -189,11 +194,11 @@ sub loc_to_num ($$) {
 	my $size_x_2 = $self->size_x_2;
 	my $notation = $self->notation;
 
-	my $num = $notation == 1 || $notation == 2
+	my $num = $notation == 2 || $notation == 3
 		? (int($loc / $size_x_2) + 1) * $size_x_2 - $loc % $size_x_2
 		: $loc + 1;
 
-	return $notation <= 1 ? $num : $self->locs - 1 - $num;
+	return $notation <= 2 ? $num : $self->locs - 1 - $num;
 }
 
 sub num_to_loc ($$) {
@@ -203,11 +208,11 @@ sub num_to_loc ($$) {
 	my $size_x_2 = $self->size_x_2;
 	my $notation = $self->notation;
 
-	my $loc = $notation == 1 || $notation == 2
+	my $loc = $notation == 2 || $notation == 3
 		? (int(($num - 1) / $size_x_2) + 1) * $size_x_2 - 1 - ($num - 1) % $size_x_2
 		: $num - 1;
 
-	return $notation <= 1 ? $loc : $self->locs - 1 - $loc;
+	return $notation <= 2 ? $loc : $self->locs - 1 - $loc;
 }
 
 sub occup ($$) {
