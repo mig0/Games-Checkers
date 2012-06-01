@@ -77,15 +77,35 @@ Games::Checkers - Play the Checkers games
 =head1 ABSTRACT
 
 Games::Checkers is a set of Perl classes implementing the Checkers game
-play. Several national rule variants are supported. A basic AI heuristics is
-implemented using the Minimax algorithm. Replay of previously recorded games
-is supported too.
+play. 17 different national rule variants (and any custom mix of rules)
+are supported on any arbitrary board sizes. A basic AI heuristics is
+implemented using the Minimax algorithm. Replay of previously recorded
+games is supported too.
 
 =head1 DESCRIPTION
 
 This package is intended to provide complete infrastructure for interactive
-and automatic playing and manipulating of Checkers games. Some features are
-not implemented yet.
+and automatic playing and manipulating of Checkers games.
+
+Currently supported checkers/draughts variants (AI and game replay):
+
+	* russian
+	* russian_give_away
+	* russian_10x8
+	* international
+	* english
+	* italian
+	* spanish
+	* argentinian
+	* portuguese
+	* czech
+	* german
+	* thai
+	* pool
+	* brazilian
+	* frisian
+	* canadian
+	* sri_lankian
 
 Currently supported board sizes:
 
@@ -96,11 +116,11 @@ Currently supported board sizes:
 	* 12x12
 	* 14x14, 16x16 (not too practical)
 
-Currently supported variants:
-
-	* Russian Checkers (AI and game replay)
-	* British Checkers (game replay)
-	* Italian Checkers (game replay, set $ENV{ITALIAN_BOARD_NOTATION})
+Note that every variant configures its own board size, but it is made
+possible to play using any variant rules on different board sizes too,
+for example Russian Checkers on 12x12 board. Or even construct own
+rule variants, like: Give Away International Checkers on the 8x10 board
+without the requirement to capture maximal amount of checkers.
 
 Currently supported game file formats:
 
