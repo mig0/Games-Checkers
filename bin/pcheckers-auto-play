@@ -39,6 +39,7 @@ my $dumb_term = 0;
 my $dumb_chars = 0;
 my $fullscreen = 0;
 my $max_move_num = 400;
+my $variant = undef;  # means 'default'
 
 sub show_help (;$) {
 	my $is_error = shift || 0;
@@ -62,6 +63,7 @@ sub show_help (;$) {
 			-f --fullscreen    start in fullscreen mode (incompatible with -t)
 			-m --move-num N    limit the game moves to the number
 			-g --give-away     change rules to "give away"
+			-v --variant NAME  'russian', 'english', 'spanish', 'international' etc.
 	};
 	$usage =~ s/^\n//; $usage =~ s/^\t\t?//mg;
 	print $out $usage;
@@ -83,9 +85,11 @@ GetOptions(
 	"f|fullscreen!" => \$fullscreen,
 	"m|move-num=s"  => \$max_move_num,
 	"g|give-away!"  => \$Games::Checkers::give_away,
+	"v|variant=s"   => \$variant,
 ) || show_help(1);
 
 my $game = Games::Checkers::Game->new(
+	variant => $variant,
 	size => $size,
 	board => $board,
 	black => $black,
