@@ -75,7 +75,7 @@ sub next_record ($) {
 	while (!$move_string || ($line = $self->{fd}->getline) && $self->{lineno}++) {
 		$line =~ s/[\r\n]+$/ /;
 		$move_string .= $line;
-		last if $line =~ /$result\s*$/;
+		last if $line =~ /\Q$result\E\s*$/;
 
 		# tolerate some broken PDNs without trailing result separator
 		my $next_char = $self->{fd}->getc || last;
@@ -85,13 +85,13 @@ sub next_record ($) {
 
 	# tolerate some broken PDNs without result separator
 #	warn $self->error_prefix . "\tSeparator ($result) from line $lineno is not found, continuing anyway\n"
-#		unless $line =~ /$result\s*$/;
+#		unless $line =~ /\Q$result\E\s*$/;
 
-	$move_string =~ s/\b$result\b.*//;
+	$move_string =~ s/\Q$result\E\s*$//;
 	$move_string =~ s/{[^}]*}//g;  # remove comments
 	$move_string =~ s/\([^\)]*(\)[^(]*)?\)//g;  # remove comments
 	$move_string =~ s/([x:*-])\s+(\d|\w)/$1$2/gi;  # remove alignment spaces
-	my @move_verge_strings = split(/(?:\s+|\d+\.\s*)+/, $move_string);
+	my @move_verge_strings = split(/(?:\s+|\d+\.+\s*)+/, $move_string);
 	shift @move_verge_strings while @move_verge_strings && !$move_verge_strings[0];
 
 	# tolerate some broken PDNs with no real moves, like: 1. - - 2. - -
