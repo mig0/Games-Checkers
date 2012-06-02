@@ -57,13 +57,27 @@ sub init ($$) {
 
 	$self->init_empty;
 
-	# support "a1,a3/h6/h2/b8" or "/22,4,8/9" param
+	# support 'random', 'empty', FEN or "a1,a3/h6/h2/b8" or "/22,4,8/9"
+	delete $ENV{WHITE_STARTS};
 	if (!$param_class) {
 		my @l;
 		if ($board_or_locs eq 'random') {
 			push @{$l[4 * rand() ** 2] ||= []}, $_ for grep { rand(2) > 1 } 1 .. $self->locs;
-		} elsif ($board_or_locs ne 'empty') {
-			@l = map { [ split ',' ] } split '/', $board_or_locs;
+		} elsif ($board_or_locs eq 'empty') {
+		} elsif ($board_or_locs =~ m!^([+-]?)([\d/,]+)$!) {
+			$ENV{WHITE_STARTS} = $1 eq '+' ? 1 : 0 if $1;
+			@l = map { [ split ',' ] } split '/', $2;
+		} elsif ($board_or_locs =~ m#^([WB]?):([WB])(K?\w?\d+(?:,K?\w?\d+)*):((?!\2)[WB])(K?\w?\d+(?:,K?\w?\d+)*)\.?$#) {
+			$ENV{WHITE_STARTS} = $1 eq 'W' ? 1 : 0 if $1;
+			my $i = $2 eq 'W' ? 0 : 2;
+			my @locs1 = split(/,/, $3);
+			my @locs2 = split(/,/, $5);
+			$l[$i + 0] = [                  grep !/^K/, @locs1 ];
+			$l[$i + 1] = [                  grep !/^K/, @locs2 ];
+			$l[2 - $i] = [ map { /^K(.*)/ } grep  /^K/, @locs1 ];
+			$l[3 - $i] = [ map { /^K(.*)/ } grep  /^K/, @locs2 ];
+		} else {
+			die "Unsupported board position string ($board_or_locs)\n";
 		}
 		$board_or_locs = \@l;
 		$param_class = 'ARRAY';

@@ -97,6 +97,7 @@ while (my $pdn_record = $pdn_parser->next_record) {
 
 	my $game = Games::Checkers::Game->new(
 		variant => $variant,
+		board => $values->{FEN},
 		title => ($values->{White} || "???") . ' - ' . ($values->{Black} || "???"),
 		description => join("\n", map {
 			$values->{$_} ? "$_: $values->{$_}" : ()

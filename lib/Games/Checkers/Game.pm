@@ -36,7 +36,8 @@ sub new ($%) {
 	my $title = $params{title} || "Unknown White - Unknown Black";
 	my $board = Games::Checkers::Board->new($params{board}, $params{size});
 	my $color = defined $params{color} ? $params{color} :
-		$::RULES{WHITE_STARTS} ^ ($params{black} || 0) ? White : Black;
+		(defined $ENV{WHITE_STARTS} ? $ENV{WHITE_STARTS} :
+		$::RULES{WHITE_STARTS}) ^ ($params{black} || 0) ? White : Black;
 
 	# probe and use if available
 	my $frontend = !($params{use_term} || $ENV{USE_TERM}) && eval q{
