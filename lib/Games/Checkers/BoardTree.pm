@@ -87,7 +87,7 @@ sub is_better_cost ($$$$) {
 
 	my $max = ($cost1 > $cost2) ? $cost1 : $cost2;
 	my $min = ($cost1 < $cost2) ? $cost1 : $cost2;
-	my $best = ($color == ($Games::Checkers::give_away ? Black : White)) ? $max : $min;
+	my $best = ($color == ($::RULES{GIVE_AWAY} ? Black : White)) ? $max : $min;
 
 	return $best == $cost1;
 }

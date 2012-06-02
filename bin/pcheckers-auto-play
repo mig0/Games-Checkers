@@ -84,7 +84,7 @@ GetOptions(
 	"C|dumb-chars!" => \$dumb_chars,
 	"f|fullscreen!" => \$fullscreen,
 	"m|move-num=s"  => \$max_move_num,
-	"g|give-away!"  => \$Games::Checkers::give_away,
+	"g|give-away!"  => \$ENV{GIVE_AWAY},
 	"v|variant=s"   => \$variant,
 ) || show_help(1);
 
