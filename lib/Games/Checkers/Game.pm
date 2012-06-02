@@ -226,12 +226,20 @@ sub show_move ($$) {
 	$self->{ply_count}++;
 }
 
+sub color_name ($;$$) {
+	my $self = shift;
+	my $opposite = shift || 0;
+	my $initial = shift || 0;
+
+	return (($initial ? $self->{initial}{color} : $self->{color})
+		== White xor $opposite) ? 'White' : 'Black';
+}
+
 sub show_result ($;$$) {
 	my $self = shift;
 	my $message = shift || ($self->is_max_move_num_reached
-		? "Automatic draw after $self->{max_move_num} moves."
-		: (($self->{color} == White xor $::RULES{GIVE_AWAY})
-			? "Black" : "White") . " won."
+		? "Automatic draw after $self->{max_move_num} moves"
+		: $self->color_name(!$::RULES{GIVE_AWAY}) . " won"
 	);
 	my $break = shift;
 
@@ -239,10 +247,27 @@ sub show_result ($;$$) {
 		$self->call_frontend('show_result', $message)
 			&& return;  # return on "restart" or unconfirmed "quit"
 	} else {
-		print "\n$message\e[0K\n";
+		print "\n$message.\e[0K\n";
 	}
 
 	$self->hold($break);
+}
+
+sub show_result_code ($;$$) {
+	my $self = shift;
+	my $code = shift || '';
+	my $break = shift;
+
+	my $message =
+		$code eq '1-0'     || $code eq '2-0' ? '%C %l' :
+		$code eq '0-1'     || $code eq '0-2' ? '%c %l' :
+		$code eq '1/2-1/2' || $code eq '1-1' ? 'Draw is agreed' :
+		$code eq '*' ? 'Unfinished game' : "Unknown result ($code)";
+
+	$message =~ s/%([cC])/$self->color_name($1 ne 'c', 1)/e;
+	$message =~ s/%l/$self->can_move ? 'resigned' : 'lost'/e;
+
+	$self->show_result($message, $break);
 }
 
 sub edit_board ($) {

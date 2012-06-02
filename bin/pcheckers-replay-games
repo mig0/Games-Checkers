@@ -69,12 +69,6 @@ GetOptions(
 	"f|fullscreen!" => \$fullscreen,
 ) || show_help(1);
 
-my %result_string = (
-	'1-0' => "Black resigned",
-	'0-1' => "White resigned",
-	'1/2-1/2' => "Draw is agreed",
-);
-
 my $games_dir = "$FindBin::Bin/../data/games";
 $games_dir = "$FindBin::Bin/../share/pcheckers/games"
 	unless -d $games_dir;
@@ -124,6 +118,5 @@ while (my $pdn_record = $pdn_parser->next_record) {
 		$game->show_board;
 	}
 
-	my $result = $values->{Result} || "";
-	$game->show_result($result_string{$result} || "Unknown result ($result)", $break);
+	$game->show_result_code($values->{Result}, $break);
 }
