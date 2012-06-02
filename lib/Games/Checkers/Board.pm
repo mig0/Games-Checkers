@@ -64,17 +64,17 @@ sub init ($$) {
 		if ($board_or_locs eq 'random') {
 			push @{$l[4 * rand() ** 2] ||= []}, $_ for grep { rand(2) > 1 } 1 .. $self->locs;
 		} elsif ($board_or_locs eq 'empty') {
-		} elsif ($board_or_locs =~ m!^([+-]?)([\d/,]+)$!) {
+		} elsif ($board_or_locs =~ m!^([+-]?)([\w?\d/,]+)$!) {
 			$ENV{WHITE_STARTS} = $1 eq '+' ? 1 : 0 if $1;
 			@l = map { [ split ',' ] } split '/', $2;
 		} elsif ($board_or_locs =~ m#^([WB]?):([WB])(K?\w?\d+(?:,K?\w?\d+)*):((?!\2)[WB])(K?\w?\d+(?:,K?\w?\d+)*)\.?$#) {
 			$ENV{WHITE_STARTS} = $1 eq 'W' ? 1 : 0 if $1;
-			my $i = $2 eq 'W' ? 0 : 2;
+			my $i = $2 eq 'W' ? 0 : 1;
 			my @locs1 = split(/,/, $3);
 			my @locs2 = split(/,/, $5);
-			$l[$i + 0] = [                  grep !/^K/, @locs1 ];
-			$l[$i + 1] = [                  grep !/^K/, @locs2 ];
-			$l[2 - $i] = [ map { /^K(.*)/ } grep  /^K/, @locs1 ];
+			$l[0 + $i] = [                  grep !/^K/, @locs1 ];
+			$l[1 - $i] = [                  grep !/^K/, @locs2 ];
+			$l[2 + $i] = [ map { /^K(.*)/ } grep  /^K/, @locs1 ];
 			$l[3 - $i] = [ map { /^K(.*)/ } grep  /^K/, @locs2 ];
 		} else {
 			die "Unsupported board position string ($board_or_locs)\n";
