@@ -78,7 +78,8 @@ sub next_record ($) {
 		last if $line =~ /\Q$result\E\s*$/;
 
 		# tolerate some broken PDNs without trailing result separator
-		my $next_char = $self->{fd}->getc || last;
+		my $next_char = $self->{fd}->getc;
+		last unless defined $next_char;
 		$self->{fd}->ungetc(ord($next_char));
 		last if $next_char eq "[";
 	}
