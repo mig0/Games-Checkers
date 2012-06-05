@@ -28,6 +28,8 @@ use Games::Checkers::DeclareConstant {
 	King => 1,
 	NL => -2,
 	ML => -3,
+	MIN_SCORE => -1e9,
+	MAX_SCORE => +1e9,
 	DIE_WITH_STACK => sub {
 		for (my $i = 0; ; $i++) {
 			my ($package, $filename, $line, $subroutine) = caller($i);

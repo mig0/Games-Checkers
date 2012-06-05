@@ -29,7 +29,7 @@ print $board_dump unless @$expanded_nodes;
 
 foreach (@$expanded_nodes) {
 	my $board = $_->{board};
-	my $cost = $board->get_cost($color = $color == White ? Black : White);
+	my $score = $board->get_score($color = $color == White ? Black : White);
 	print $board->dump($board_dump, "$cost " . $_->{move}->dump($board));
 
 	if ($ENV{EXPAND}) {
@@ -37,7 +37,7 @@ foreach (@$expanded_nodes) {
 		my $move = $board_tree->choose_best_move;
 
 		$board->apply_move($move);
-		$cost = $board->get_cost($color = $color == White ? Black : White);
+		$score = $board->get_score($color = $color == White ? Black : White);
 		print $board->dump(3, "$cost " . $move->dump($board));
 	}
 }

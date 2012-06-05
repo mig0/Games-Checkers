@@ -331,7 +331,7 @@ sub chk ($$$$) {
 		$self->piece($loc) == $piece ? 1 : 0;
 }
 
-sub get_cost ($$) {
+sub get_score ($$) {
 	my $self = shift;
 	my $turn = shift;
 
@@ -360,8 +360,8 @@ sub get_cost ($$) {
 		$black_bonus += $size_y_1 - int($loc / $size_x_2) if $is_pawn;
 	}
 
-	return -1e8 if $white_pawns + $white_kings == 0;
-	return +1e8 if $black_pawns + $black_kings == 0;
+	return MIN_SCORE if $white_pawns + $white_kings == 0;
+	return MAX_SCORE if $black_pawns + $black_kings == 0;
 
 	my $king_cost = $::RULES{KINGS_LONG_RANGED} ? $size_y_1 * 40 : 167;
 
