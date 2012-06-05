@@ -123,7 +123,7 @@ package Games::Checkers::BoardTree;
 
 use Games::Checkers::MoveConstants;
 
-use constant DEFAULT_LEVEL => 3;
+use constant DEFAULT_LEVEL => 5;
 
 sub new ($$$;$) {
 	my $class = shift;
