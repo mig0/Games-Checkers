@@ -275,6 +275,8 @@ sub update_display ($) {
 	my $self = shift;
 
 	SDL::Video::update_rect($self->{display}, 0, 0, 0, 0);
+
+	return 1;
 }
 
 sub process_pending_events ($;$) {
@@ -346,11 +348,10 @@ sub sleep ($$) {
 sub wait ($;$) {
 	my $self = shift;
 
-	while (SDL::Events::wait_event) {
+	while ($self->update_display && SDL::Events::wait_event) {
 		my $rv = $self->process_pending_events("want_unpress");
 		return $rv if $rv < 0;
 		last if $rv == 1;
-		$self->update_display;
 	}
 
 	return 0;
@@ -515,12 +516,11 @@ sub edit_board ($;$) {
 
 	my $current = 0;
 
-	$self->show_title("Edit Board");
 	$self->show_helper_msg(
 		"a - random board",
 		"e - empty board",
-		"r - revert",
-		"ESC - finish if unchanged",
+		"r - reset",
+		"ESC - reset or abort",
 		"Enter - finish",
 	);
 
@@ -544,10 +544,12 @@ sub edit_board ($;$) {
 		}
 
 		$self->show_board;
+		$self->show_title(sprintf "Edit Board (Balance: %+d)", $board->get_score);
 		my ($rv, $which, $is_second) = $self->wait_for_press(\@rects);
 
 		if ($rv == QUIT_PRESSED) {
 			last if $board->equals($orig_board);
+			$rv = RESTART_PRESSED;
 		}
 		if ($rv == RESTART_PRESSED) {
 			$board->copy($orig_board);
@@ -563,7 +565,7 @@ sub edit_board ($;$) {
 		}
 		if ($rv == KEY_PRESSED) {
 			my $key_sym = $which;
-			if ($key_sym == SDLK_RETURN) {
+			if ($key_sym == SDLK_RETURN || $key_sym == SDLK_KP_ENTER) {
 				last;
 			}
 			if ($key_sym == SDLK_e) {
