@@ -333,7 +333,7 @@ sub chk ($$$$) {
 
 sub get_score ($$) {
 	my $self = shift;
-	my $turn = shift;
+	my $color = shift;
 
 	my $size_y_1 = $self->size_y_1;
 	my $size_x_2 = $self->size_x_2;
@@ -360,16 +360,19 @@ sub get_score ($$) {
 		$black_bonus += $size_y_1 - int($loc / $size_x_2) if $is_pawn;
 	}
 
-	return MIN_SCORE if $white_pawns + $white_kings == 0;
-	return MAX_SCORE if $black_pawns + $black_kings == 0;
-
 	my $king_cost = $::RULES{KINGS_LONG_RANGED} ? $size_y_1 * 40 : 167;
 
-	return
+	my $color_factor = $color == White ? 1 : -1;
+	my $score =
 		+ ($white_pawns - $black_pawns) * 100
 		+ ($white_kings - $black_kings) * $king_cost
 		+ ($white_bonus - $black_bonus) * 10
-		+ ($turn == White ? 5 : -5);
+		+ 5 * $color_factor;
+
+	$score = MIN_SCORE / 10 - $color_factor if $white_pawns + $white_kings == 0;
+	$score = MAX_SCORE / 10 - $color_factor if $black_pawns + $black_kings == 0;
+
+	return $score * 10 + $color_factor * int(rand(10));
 }
 
 sub step_destinations ($$;$$) {
