@@ -443,15 +443,15 @@ sub show_move ($$$$$) {
 	my $self = shift;
 	my $move = shift;
 	my $color = shift;
-	my $count = shift;
+	my $prev_plies = shift;
 
 	my $text = $self->{text};
 	my $display = $self->{display};
 
 	my $str = $move->dump($self->{board});
-	my $n_str = int($count / 2 + 1) . '.';
+	my $n_str = int(@$prev_plies / 2 + 1) . '.';
 	my $x = 0;
-	if ($count % 2 == 0) {
+	if (@$prev_plies % 2 == 0) {
 		$self->{move_msg_y} += 20;
 		$str = "$n_str $str";
 	} else {

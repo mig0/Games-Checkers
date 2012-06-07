@@ -54,7 +54,7 @@ sub new ($%) {
 		level => $params{level} || 3,
 		random => $params{random} || 0,
 		max_move_num => $params{max_move_num} || 1000,
-		ply_count => 0,
+		plies => [],
 		initial => {
 			board => $board->clone,
 			color => $color,
@@ -71,7 +71,7 @@ sub new ($%) {
 sub init ($) {
 	my $self = shift;
 
-	$self->{ply_count} = 0;
+	$self->{plies} = [];
 
 	if ($self->{frontend}) {
 		$self->{frontend}->init;
@@ -170,7 +170,7 @@ sub can_move ($) {
 sub is_max_move_num_reached ($) {
 	my $self = shift;
 
-	return $self->{ply_count} >= $self->{max_move_num} * 2;
+	return @{$self->{plies}} >= $self->{max_move_num} * 2;
 }
 
 sub choose_move ($) {
@@ -208,22 +208,22 @@ sub show_move ($$) {
 	my $self = shift;
 	my $move = shift;
 
-	my ($board, $color, $ply_count) = map {
+	my ($board, $color, $plies) = map {
 		$self->{$_}
-	} qw(board color ply_count);
+	} qw(board color plies);
 
 	if ($self->{frontend}) {
-		$self->call_frontend('show_move', $move, $color, $ply_count)
+		$self->call_frontend('show_move', $move, $color, $plies)
 			&& return;  # return on "restart" or unconfirmed "quit"
 	} else {
-		printf "  %02d. %s", 1 + $ply_count / 2, $color == White ? "" : "... ";
+		printf "  %02d. %s", 1 + @$plies / 2, $color == White ? "" : "... ";
 		print $move->dump($board), "                           \n";
 	}
 
 	$board->apply_move($move);
 
 	$self->{color} = $color == White ? Black : White;
-	$self->{ply_count}++;
+	push @$plies, $move;
 }
 
 sub color_name ($;$$) {
