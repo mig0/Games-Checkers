@@ -162,7 +162,10 @@ sub new ($$$%) {
 		title_height => $title_height,
 		helper_x => $helper_x,
 		helper_mid_x => $helper_mid_x,
-		move_msg_y => 0,
+		ply_strs => [],
+		ply_o => 0,
+		ply_l => 0,
+		ply_m => int($h / 20 - 1) * 2,
 		display => $display,
 		bg => $bg,
 		title_height => $title_height,
@@ -228,7 +231,9 @@ sub restart ($$) {
 	my $self = shift;
 	my $board = shift;
 
-	$self->{move_msg_y} = 0;
+	$self->{ply_strs} = [];
+	$self->{ply_o} = 0;
+	$self->{ply_l} = 0;
 	$self->{board} = $board;
 
 	$self->clear_helper;
@@ -439,28 +444,70 @@ sub show_board ($) {
 	$self->process_pending_events;
 }
 
-sub show_move ($$$$$) {
+sub show_last_move ($;$) {
 	my $self = shift;
-	my $move = shift;
-	my $color = shift;
-	my $prev_plies = shift;
+	my $for_redraw = shift || 0;
+
+	my $ply_strs = $self->{ply_strs};
+	my $ply_l = $self->{ply_l};
+	my $ply_e = $for_redraw ? $ply_l + 2 > @$ply_strs ? $ply_l + 1 : $ply_l + 2 : @$ply_strs;
+
+	my $plies_to_show = $ply_e - $ply_l;
+	my $y = 20 * int(($ply_l - $self->{ply_o} + 2) / 2);
+	my $n = int($ply_l / 2) + 1;
+	my $show_1 = $ply_l % 2 == 0;
+	my $show_2 = $ply_e % 2 == 0;
+
+	die "Internal: plies_to_show $plies_to_show is not in [1, 2]\n"
+		if $plies_to_show <= 0 || $plies_to_show > 2;
+	die "Internal: show_1 $show_1 + show_2 $show_2 != plies_to_show $plies_to_show\n"
+		if $show_1 + $show_2 != $plies_to_show;
 
 	my $text = $self->{text};
 	my $display = $self->{display};
+	my $helper_x = $self->{helper_x};
 
-	my $str = $move->dump($self->{board});
-	my $n_str = int(@$prev_plies / 2 + 1) . '.';
-	my $x = 0;
-	if (@$prev_plies % 2 == 0) {
-		$self->{move_msg_y} += 20;
-		$str = "$n_str $str";
-	} else {
-		$x = $self->{helper_mid_x} - $self->{helper_x} + 7;
+	$text->write_xy($display, $helper_x, $y, $n)
+		if $show_1;
+	$text->write_xy($display, $helper_x + 30, $y, $ply_strs->[$ply_l++])
+		if $show_1;
+	$text->write_xy($display, $self->{helper_mid_x} + 15, $y, $ply_strs->[$ply_l++])
+		if $show_2;
+
+	$self->{ply_l} = $ply_l;
+}
+
+sub show_moves ($$) {
+	my $self = shift;
+	my $plies = shift;
+
+	$self->clear_helper;
+
+	$self->{ply_l} = $self->{ply_o};
+
+	for (0 .. $self->{ply_m} / 2) {
+		last if $self->{ply_l} >= @{$self->{ply_strs}};
+		$self->show_last_move(1);
 	}
+}
 
-	$text->write_xy($display, $self->{helper_x} +  0, $self->{move_msg_y} += 20, $n_str)
-		if !$self->{move_msg_y};
-	$text->write_xy($display, $self->{helper_x} + $x, $self->{move_msg_y}, $str);
+sub show_move ($$$$$$) {
+	my $self = shift;
+	my $move = shift;
+	my $move_str = shift;
+	my $color = shift;
+	my $prev_plies = shift;
+
+	push @{$self->{ply_strs}}, " " if !@$prev_plies && $color;
+	push @{$self->{ply_strs}}, $move_str;
+
+	my $x = 0;
+	if (!$color && $self->{ply_l} - $self->{ply_o} >= $self->{ply_m}) {
+		$self->{ply_o} += 2;
+		$self->show_moves;
+	} else {
+		$self->show_last_move;
+	}
 
 	$self->process_pending_events;
 }

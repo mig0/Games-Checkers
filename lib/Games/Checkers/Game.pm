@@ -212,12 +212,14 @@ sub show_move ($$) {
 		$self->{$_}
 	} qw(board color plies);
 
+	my $move_str = $move->dump($board);
+
 	if ($self->{frontend}) {
-		$self->call_frontend('show_move', $move, $color, $plies)
+		$self->call_frontend('show_move', $move, $move_str, $color, $plies)
 			&& return;  # return on "restart" or unconfirmed "quit"
 	} else {
 		printf "  %02d. %s", 1 + @$plies / 2, $color == White ? "" : "... ";
-		print $move->dump($board), "                           \n";
+		print "$move_str                           \n";
 	}
 
 	$board->apply_move($move);
