@@ -213,12 +213,13 @@ sub show_move ($$) {
 	} qw(board color plies);
 
 	my $move_str = $move->dump($board);
+	my $is_second = ($color eq White) != $::RULES{WHITE_STARTS};
 
 	if ($self->{frontend}) {
-		$self->call_frontend('show_move', $move, $move_str, $color, $plies)
+		$self->call_frontend('show_move', $move, $move_str, $is_second, $plies)
 			&& return;  # return on "restart" or unconfirmed "quit"
 	} else {
-		printf "  %02d. %s", 1 + @$plies / 2, $color == White ? "" : "... ";
+		printf "  %02d. %s", 1 + @$plies / 2, $is_second ? "... " : "";
 		print "$move_str                           \n";
 	}
 

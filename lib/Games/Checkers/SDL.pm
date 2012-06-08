@@ -495,18 +495,17 @@ sub show_move ($$$$$$) {
 	my $self = shift;
 	my $move = shift;
 	my $move_str = shift;
-	my $color = shift;
+	my $is_second = shift;
 	my $prev_plies = shift;
 
-	push @{$self->{ply_strs}}, " " if !@$prev_plies && $color;
+	push @{$self->{ply_strs}}, " " if !@$prev_plies && $is_second;
 	push @{$self->{ply_strs}}, $move_str;
 
-	my $x = 0;
-	if (!$color && $self->{ply_l} - $self->{ply_o} >= $self->{ply_m}) {
+	if ($is_second || $self->{ply_l} - $self->{ply_o} < $self->{ply_m}) {
+		$self->show_last_move;
+	} else {
 		$self->{ply_o} += 2;
 		$self->show_moves;
-	} else {
-		$self->show_last_move;
 	}
 
 	$self->process_pending_events;
