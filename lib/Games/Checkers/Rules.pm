@@ -153,28 +153,48 @@ our %variant_rules = (
 		BOTTOM_LEFT_CELL          => 0,
 		PDN_GAME_TYPE             => 00,
 	},
-	british => {
-		base => 'english',
-	},
-	internt => {
-		base => 'international',
-	},
-	default => {
-		base => 'russian',
-	},
+	british => 'english',
+	internt => 'international',
+	default => 'russian',
+	20 => 'international',
+	21 => 'english',
+	22 => 'italian',
+	23 => 'pool',
+	24 => 'spanish',
+	25 => 'russian',
+	26 => 'brazilian',
+	27 => 'canadian',
+	28 => 'portuguese',
+	29 => 'czech',
+	31 => 'thai',
+	40 => 'frisian',
+	41 => 'russian_10x8',
 );
 
 sub set_variant ($%) {
 	my $name = shift || 'default';
 	my %params = @_;
 
-	%::RULES = (base => $name);
+	# support GameType specification from PDN
+	my ($base, $starting_color, $size_x, $size_y, $notation, $invert) =
+		split(',', $name);
+	$params{WHITE_STARTS} = $starting_color eq 'W' ? 1 : 0
+		if defined $starting_color;
+	$params{BOARD_SIZE} = "${size_x}x$size_y"
+		if $size_x && $size_y && "$size_x$size_y" =~ /^\d+$/;
+	$params{BOARD_NOTATION} = $1 eq 'N' ? [ qw(BL BR TL TR) ]->[$2] : "$1$2"
+		if defined $notation && $notation =~ /^([ANS])([0-3])$/;
+	$params{BOTTOM_LEFT_CELL} = $invert ? 0 : 1
+		if defined $invert;
+
+	%::RULES = (base => $base);
 	for (keys %{$variant_rules{international}}) {
 		$::RULES{$_} = defined $params{$_} ? $params{$_} : $ENV{$_};
 	}
 
 	while (my $base = delete $::RULES{base}) {
 		my $rules = $variant_rules{$base} || die "Checkers variant '$base' is unknown\n";
+		$rules = { base => $rules } unless ref($rules);
 		for (keys %$rules) {
 			$::RULES{$_} = $rules->{$_} unless defined $::RULES{$_};
 		}

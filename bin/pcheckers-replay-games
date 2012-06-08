@@ -90,7 +90,7 @@ while (my $pdn_record = $pdn_parser->next_record) {
 	my ($move_verges, $values) = @$pdn_record;
 
 	my $game = Games::Checkers::Game->new(
-		variant => $variant,
+		variant => $values->{GameType} || $variant,
 		board => $values->{FEN},
 		title => ($values->{White} || "???") . ' - ' . ($values->{Black} || "???"),
 		description => join("\n", map {
