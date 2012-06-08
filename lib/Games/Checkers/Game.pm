@@ -232,9 +232,12 @@ sub show_move ($$) {
 sub color_name ($;$$) {
 	my $self = shift;
 	my $opposite = shift || 0;
-	my $initial = shift || 0;
+	my $starting = shift || 0;
 
-	return (($initial ? $self->{initial}{color} : $self->{color})
+	# does it ever make sense to use $self->{initial}{color} instead?
+	my $starting_color = $::RULES{WHITE_STARTS} ? White : Black;
+
+	return (($starting ? $starting_color : $self->{color})
 		== White xor $opposite) ? 'White' : 'Black';
 }
 
