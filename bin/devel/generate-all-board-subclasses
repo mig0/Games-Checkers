@@ -1,0 +1,13 @@
+#!/bin/sh
+
+dir=`dirname $0`/../..
+
+bin/devel/generate-board-subclass  4  4 >lib/Games/Checkers/Board/_4x4.pm
+bin/devel/generate-board-subclass  6  6 >lib/Games/Checkers/Board/_6x6.pm
+bin/devel/generate-board-subclass  8  8 >lib/Games/Checkers/Board/_8x8.pm
+bin/devel/generate-board-subclass  8 10 >lib/Games/Checkers/Board/_8x10.pm
+bin/devel/generate-board-subclass 10  8 >lib/Games/Checkers/Board/_10x8.pm
+bin/devel/generate-board-subclass 10 10 >lib/Games/Checkers/Board/_10x10.pm
+bin/devel/generate-board-subclass 12 12 >lib/Games/Checkers/Board/_12x12.pm
+bin/devel/generate-board-subclass 14 14 >lib/Games/Checkers/Board/_14x14.pm
+bin/devel/generate-board-subclass 16 16 >lib/Games/Checkers/Board/_16x16.pm
