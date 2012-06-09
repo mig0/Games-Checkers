@@ -462,6 +462,10 @@ sub can_piece_beat ($$;$) {
 		next if $self->occup($loc2);
 		my $loc1 = $self->enclosed_figure($loc, $loc2);
 		next if $loc1 == NL || $loc1 == ML;
+		next
+			if $::RULES{PAWNS_CANT_CAPTURE_KINGS}
+			&& $self->piece($loc)  == Pawn
+			&& $self->piece($loc1) == King;
 		return Yes if $self->occup($loc1) && $self->color($loc1) != $color;
 	}
 	return No;
