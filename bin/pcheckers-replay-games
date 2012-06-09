@@ -85,7 +85,6 @@ show_help() unless $filename;
 $filename = "$games_dir/$filename" if $filename =~ m!^\w+\/[^\/]+$!;
 
 ($variant) = $filename =~ m!\bgames/(\w+)/[^\/]+$! unless $variant;
-Games::Checkers::Rules::set_variant($variant);
 
 my $pdn_parser = Games::Checkers::PDNParser->new($filename, $variant);
 
