@@ -87,17 +87,17 @@ $filename = "$games_dir/$filename" if $filename =~ m!^\w+\/[^\/]+$!;
 ($variant) = $filename =~ m!\bgames/(\w+)/[^\/]+$! unless $variant;
 Games::Checkers::Rules::set_variant($variant);
 
-my $pdn_parser = Games::Checkers::PDNParser->new($filename);
+my $pdn_parser = Games::Checkers::PDNParser->new($filename, $variant);
 
 my $game_count = 0;
 while (my $pdn_record = $pdn_parser->next_record) {
 	$game_count++;
 	next if $game_count < $game_start;
-	my ($move_verges, $values) = @$pdn_record;
+	my ($move_verges, $values, $variant, $board) = @$pdn_record;
 
 	my $game = Games::Checkers::Game->new(
-		variant => $values->{GameType} || $variant,
-		board => $values->{FEN},
+		variant => $variant,
+		board => $board,
 		title => ($values->{White} || "???") . ' - ' . ($values->{Black} || "???"),
 		description => join("\n", map {
 			$values->{$_} ? "$_: $values->{$_}" : ()

@@ -19,11 +19,13 @@ use warnings;
 package Games::Checkers::PDNParser;
 
 use Games::Checkers::Board;
+use Games::Checkers::Rules;
 use IO::File;
 
-sub new ($$) {
+sub new ($$;$) {
 	my $class = shift;
 	my $filename = shift;
+	my $variant = shift;
 
 	-r "$filename.$_" and $filename .= ".$_"
 		for qw(pdn.gz pdn.xz pdn.bz2 pdn gz xz bz2);
@@ -35,7 +37,7 @@ sub new ($$) {
 	my $fd = new IO::File $file_to_open;
 	die "Can't open PDN for reading ($filename)\n" unless $fd;
 
-	my $self = { fn => $filename, fd => $fd, lineno => 0 };
+	my $self = { fn => $filename, fd => $fd, lineno => 0, variant => $variant };
 	bless $self, $class;
 	return $self;
 }
@@ -48,7 +50,7 @@ sub error_prefix {
 sub next_record ($) {
 	my $self = shift;
 
-	my $record_values = {};
+	my $values = {};
 
 	my $line;
 	my $not_end = 0;
@@ -57,19 +59,21 @@ sub next_record ($) {
 		next if $line =~ /^\s*(([#;]|{.*}|\(.*\))\s*)?$/;
 		$not_end = 1;
 		if ($line =~ /\[(\w+)\s+"?(.*?)"?\]/) {
-			$record_values->{$1} = $2;
+			$values->{$1} = $2;
 			next;
 		}
 		last;
 	}
 	return undef unless $not_end;
 
-	my $result = $record_values->{Result};
+	my $result = $values->{Result};
 	die $self->error_prefix . "\tNon empty named value 'Result' is missing\n"
 		unless $result;
 	my $lineno = $self->{lineno};
 
-	my $board = Games::Checkers::Board->new;  # should use GameType
+	my $variant = $values->{GameType} || $self->{variant};
+	Games::Checkers::Rules::set_variant($variant);
+	my $board = Games::Checkers::Board->new($values->{FEN});
 
 	my $move_string = "";
 	while (!$move_string || ($line = $self->{fd}->getline) && $self->{lineno}++) {
@@ -109,7 +113,7 @@ sub next_record ($) {
 		]
 	} @move_verge_strings;
 
-	return [ \@move_verges, $record_values, $board ];
+	return [ \@move_verges, $values, $variant, $board ];
 }
 
 1;
