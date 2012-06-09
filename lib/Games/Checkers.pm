@@ -260,7 +260,6 @@ forward directions.
     Games::Checkers::Board::_16x16
     Games::Checkers::BoardTree
     Games::Checkers::BoardTreeNode
-    Games::Checkers::CompPlayer
     Games::Checkers::Constants
     Games::Checkers::CountMoveList
     Games::Checkers::CreateMoveList
@@ -274,13 +273,9 @@ forward directions.
     Games::Checkers::LocationIterator
     Games::Checkers::Move
     Games::Checkers::MoveConstants
-    Games::Checkers::MoveListNode
     Games::Checkers::MoveLocationConstructor
     Games::Checkers::PDNParser
-    Games::Checkers::Player
-    Games::Checkers::PlayerConstants
     Games::Checkers::SDL
-    Games::Checkers::UserPlayer
 
 =head1 SEE ALSO
 
