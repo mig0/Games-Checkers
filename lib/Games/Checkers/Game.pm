@@ -63,6 +63,10 @@ sub new ($%) {
 
 	bless $self, $class;
 
+	$SIG{__DIE__} = sub {
+		$self->show_result(shift);
+	};
+
 	$self->edit_board if $params{edit_board};
 
 	$self->init;
