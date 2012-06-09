@@ -66,6 +66,11 @@ sub next_record ($) {
 	}
 	return undef unless $not_end;
 
+	for (qw(White Black)) {
+		next unless $values->{$_};
+		$values->{$_} = join(' ', reverse split(/\s*,\s*/, $values->{$_}));
+	}
+
 	my $result = $values->{Result};
 	die $self->error_prefix . "\tNon empty named value 'Result' is missing\n"
 		unless $result;
