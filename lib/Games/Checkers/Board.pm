@@ -466,6 +466,9 @@ sub can_piece_beat ($$;$) {
 			if $::RULES{PAWNS_CANT_CAPTURE_KINGS}
 			&& $self->piece($src) == Pawn
 			&& $self->piece($enemy) == King;
+		next
+			if $::RULES{CAPTURING_LEAVES_NO_GAP}
+			&& $self->enclosed_locs->[$enemy]{$dst};
 		return Yes;
 	}
 	return No;
