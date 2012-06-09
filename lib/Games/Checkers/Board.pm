@@ -58,17 +58,17 @@ sub init ($$) {
 	$self->init_empty;
 
 	# support 'random', 'empty', FEN or "a1,a3/h6/h2/b8" or "/22,4,8/9"
-	delete $ENV{WHITE_STARTS};
+	delete $ENV{_WHITE_STARTS};
 	if (!$param_class) {
 		my @l;
 		if ($board_or_locs eq 'random') {
 			push @{$l[4 * rand() ** 2] ||= []}, $_ for grep { rand(2) > 1 } 1 .. $self->locs;
 		} elsif ($board_or_locs eq 'empty') {
 		} elsif ($board_or_locs =~ m!^([+-]?)([\w?\d/,]+)$!) {
-			$ENV{WHITE_STARTS} = $1 eq '+' ? 1 : 0 if $1;
+			$ENV{_WHITE_STARTS} = $1 eq '+' ? 1 : 0 if $1;
 			@l = map { [ split ',' ] } split '/', $2;
 		} elsif ($board_or_locs =~ m#^([WB]?):([WB])(K?\w?\d+(?:,K?\w?\d+)*):((?!\2)[WB])(K?\w?\d+(?:,K?\w?\d+)*)\.?$#) {
-			$ENV{WHITE_STARTS} = $1 eq 'W' ? 1 : 0 if $1;
+			$ENV{_WHITE_STARTS} = $1 eq 'W' ? 1 : 0 if $1;
 			my $i = $2 eq 'W' ? 0 : 1;
 			my @locs1 = split(/,/, $3);
 			my @locs2 = split(/,/, $5);

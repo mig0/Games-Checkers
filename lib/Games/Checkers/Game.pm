@@ -36,7 +36,7 @@ sub new ($%) {
 	my $title = $params{title} || "Unknown White - Unknown Black";
 	my $board = Games::Checkers::Board->new($params{board}, $params{size});
 	my $color = defined $params{color} ? $params{color} :
-		(defined $ENV{WHITE_STARTS} ? $ENV{WHITE_STARTS} :
+		(defined $ENV{_WHITE_STARTS} ? $ENV{_WHITE_STARTS} :
 		$::RULES{WHITE_STARTS}) ^ ($params{black} || 0) ? White : Black;
 
 	# probe and use if available
