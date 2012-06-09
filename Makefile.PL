@@ -10,7 +10,7 @@ WriteMakefile(
 		DIST_CP => 'cp',
 		TO_UNIX => 'ln -s russian $(DISTVNAME)/data/games/default && ln -s test.pdn $(DISTVNAME)/data/games/default/default.pdn',
 	},
-	EXE_FILES => [ glob("bin/*") ],
+	EXE_FILES => [ glob("bin/pcheckers*") ],
 	VERSION_FROM => 'lib/Games/Checkers.pm',
 	ABSTRACT_FROM => 'lib/Games/Checkers.pm',
 	AUTHOR => 'Mikhael Goikhman <migo@freeshell.org>',
