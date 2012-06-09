@@ -405,7 +405,7 @@ sub wait_for_press ($;$) {
 		my $x = 1               + int($mouse_x / 64);
 		my $y = $self->{size_y} - int($mouse_y / 64);
 		return (BOARD_LOC_PRESSED, $self->{board}->arr_to_loc($x, $y), $event->button_button == SDL_BUTTON_RIGHT)
-			if ($x + $y) % 2 == 0;
+			if ($x + $y + $::RULES{BOTTOM_LEFT_CELL}) % 2;
 	}
 
 	return MISC_PRESSED;
@@ -575,7 +575,7 @@ sub edit_board ($;$) {
 			my $rect = $rects[$i];
 			if ($i == $current) {
 				SDL::Video::blit_surface(
-					$self->{bg}, SDL::Rect->new($self->{b_x}, $self->{b_y} + 64, 64, 64),
+					$self->{bg}, SDL::Rect->new($self->{b_x}, $self->{b_y} + $::RULES{BOTTOM_LEFT_CELL} * 64, 64, 64),
 					$display, SDL::Rect->new(@$rect),
 				);
 			} else {
