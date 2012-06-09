@@ -35,6 +35,7 @@ my $use_term = 0;  # 0 means detect automatically
 my $dumb_term = 0;
 my $dumb_chars = 0;
 my $fullscreen = 0;
+my $variant = undef;  # means auto-detect
 
 sub show_help (;$) {
 	my $is_error = shift || 0;
@@ -52,6 +53,10 @@ sub show_help (;$) {
 			-T --dumb-term     do not position terminal cursor
 			-C --dumb-chars    do not use fancy drawing characters
 			-f --fullscreen    start in fullscreen mode (incompatible with -t)
+			-v --variant NAME  'russian', 'english', 'spanish', 'international' etc.
+
+		Usually the game variant is auto-detected (either from GameType tag in PDN
+		or games/variant subdir), but you may also force it using --variant.
 	};
 	$usage =~ s/^\n//; $usage =~ s/^\t\t?//mg;
 	print $out $usage;
@@ -67,6 +72,7 @@ GetOptions(
 	"T|dumb-term!"  => \$dumb_term,
 	"C|dumb-chars!" => \$dumb_chars,
 	"f|fullscreen!" => \$fullscreen,
+	"v|variant=s"   => \$variant,
 ) || show_help(1);
 
 my $games_dir = "$FindBin::Bin/../data/games";
@@ -78,7 +84,7 @@ $filename ||= "-" unless -t;
 show_help() unless $filename;
 $filename = "$games_dir/$filename" if $filename =~ m!^\w+\/[^\/]+$!;
 
-my ($variant) = $filename =~ m!\bgames/(\w+)/[^\/]+$!;
+($variant) = $filename =~ m!\bgames/(\w+)/[^\/]+$! unless $variant;
 Games::Checkers::Rules::set_variant($variant);
 
 my $pdn_parser = Games::Checkers::PDNParser->new($filename);
