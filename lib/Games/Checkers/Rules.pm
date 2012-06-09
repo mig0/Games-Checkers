@@ -73,6 +73,10 @@ our %variant_rules = (
 		CAPTURING_POSTPONED       => 0,
 		CROWNING_DURING_CAPTURE   => 'S',
 	},
+	english_give_away => {
+		base => 'english',
+		GIVE_AWAY                 => 1,
+	},
 	italian => {
 		base => 'english',
 		BOARD_NOTATION            => 'TR',
@@ -153,9 +157,17 @@ our %variant_rules = (
 		BOTTOM_LEFT_CELL          => 0,
 		PDN_GAME_TYPE             => 00,
 	},
+	default => 'russian',
 	british => 'english',
 	internt => 'international',
-	default => 'russian',
+	int     => 'international',
+	polish  => 'international',
+	shashki   => 'russian',
+	poddavki  => 'russian_give_away',
+	american  => 'english',
+	give_away => 'english_give_away',
+	american_pool => 'pool',
+	spanish_pool  => 'spanish',
 	20 => 'international',
 	21 => 'english',
 	22 => 'italian',
@@ -193,6 +205,7 @@ sub set_variant ($%) {
 	}
 
 	while (my $base = delete $::RULES{base}) {
+		$base = lc($base); $base =~ s/[\s-]+/_/g;
 		my $rules = $variant_rules{$base} || die "Checkers variant '$base' is unknown\n";
 		$rules = { base => $rules } unless ref($rules);
 		for (keys %$rules) {

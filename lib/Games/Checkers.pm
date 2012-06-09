@@ -92,8 +92,9 @@ Currently supported checkers/draughts variants (AI and game replay):
 	* russian
 	* russian_give_away
 	* russian_10x8
-	* international
+	* international (polish)
 	* english
+	* english_give_away
 	* italian
 	* spanish
 	* argentinian
@@ -101,7 +102,7 @@ Currently supported checkers/draughts variants (AI and game replay):
 	* czech
 	* german
 	* thai
-	* pool
+	* pool (american_pool)
 	* brazilian
 	* frisian
 	* canadian
