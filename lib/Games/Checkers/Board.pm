@@ -64,7 +64,7 @@ sub init ($$) {
 		if ($board_or_locs eq 'random') {
 			push @{$l[4 * rand() ** 2] ||= []}, $_ for grep { rand(2) > 1 } 1 .. $self->locs;
 		} elsif ($board_or_locs eq 'empty') {
-		} elsif ($board_or_locs =~ m!^([+-]?)([\w?\d/,]+)$!) {
+		} elsif ($board_or_locs =~ m!^([+-]?)((?:(?:\w?\d+,?)+|/)+)$!) {
 			$ENV{_WHITE_STARTS} = $1 eq '+' ? 1 : 0 if $1;
 			@l = map { [ split ',' ] } split '/', $2;
 		} elsif ($board_or_locs =~ m#^([WB]?):([WB])(K?\w?\d+(?:,K?\w?\d+)*):((?!\2)[WB])(K?\w?\d+(?:,K?\w?\d+)*)\.?$#) {
@@ -184,14 +184,14 @@ sub arr_to_loc ($$$) {
 sub ind_to_chr ($$) {
 	my $self = shift;
 	my $ind = shift;
-	
+
 	return chr(ord('a') + $ind - 1 + ($ind >= 10));
 }
 
 sub chr_to_ind ($$) {
 	my $self = shift;
 	my $chr = shift;
-	
+
 	return ord(lc($chr)) - ord('a') + 1 - ($chr ge 'j');
 }
 
