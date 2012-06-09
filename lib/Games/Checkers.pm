@@ -91,7 +91,7 @@ Currently supported checkers/draughts variants (AI and game replay):
 
 	* russian
 	* russian_give_away
-	* russian_10x8
+	* russian_10x8 (spantsiretti)
 	* international (polish)
 	* english
 	* english_give_away
@@ -120,8 +120,8 @@ Currently supported board sizes:
 Note that every variant configures its own board size, but it is made
 possible to play using any variant rules on different board sizes too,
 for example Russian Checkers on 12x12 board. Or even construct own
-rule variants, like: Give Away International Checkers on the 8x10 board
-without the requirement to capture maximal amount of checkers.
+rule variants, like: Give-Away International Checkers on the 8x10 board
+without the requirement to capture maximal amount of pieces.
 
 Currently supported game file formats:
 
