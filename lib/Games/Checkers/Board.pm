@@ -428,45 +428,45 @@ sub apply_move ($) {
 
 sub can_piece_step ($$;$) {
 	my $self = shift;
-	my $loc = shift;
-	my $locd = shift;
-	$locd = NL unless defined $locd;
+	my $src = shift;
+	my $dst0 = shift;
 
-	if (!$self->occup($loc)) {
-		warn("Internal error in can_piece_step, loc=$loc is not occupied");
+	if (!$self->occup($src)) {
+		warn("Internal error in can_piece_step, src=$src is not occupied");
 		&DIE_WITH_STACK();
 		return No;
 	}
-	for my $loc2 (@{$self->step_destinations($loc)}) {
-		next if $locd != NL && $locd != $loc2;
-		next if $self->occup($loc2);
-		return Yes if $self->enclosed_figure($loc, $loc2) == NL;
+	for my $dst (@{$self->step_destinations($src)}) {
+		next if defined $dst0 && $dst != $dst0;
+		next if $self->occup($dst);
+		next if $self->enclosed_figure($src, $dst) != NL;
+		return Yes;
 	}
 	return No;
 }
 
 sub can_piece_beat ($$;$) {
 	my $self = shift;
-	my $loc = shift;
-	my $locd = shift;
-	$locd = NL unless defined $locd;
+	my $src = shift;
+	my $dst0 = shift;
 
-	if (!$self->occup($loc)) {
-		warn("Internal error in can_piece_beat, loc=$loc is not occupied");
+	if (!$self->occup($src)) {
+		warn("Internal error in can_piece_beat, src=$src is not occupied");
 		&DIE_WITH_STACK();
 		return No;
 	}
-	my $color = $self->color($loc);
-	for my $loc2 (@{$self->beat_destinations($loc)}) {
-		next if $locd != NL && $locd != $loc2;
-		next if $self->occup($loc2);
-		my $loc1 = $self->enclosed_figure($loc, $loc2);
-		next if $loc1 == NL || $loc1 == ML;
+	my $color = $self->color($src);
+	for my $dst (@{$self->beat_destinations($src)}) {
+		next if defined $dst0 && $dst != $dst0;
+		next if $self->occup($dst);
+		my $enemy = $self->enclosed_figure($src, $dst);
+		next if $enemy == NL || $enemy == ML;
+		next if $self->color($enemy) == $color;
 		next
 			if $::RULES{PAWNS_CANT_CAPTURE_KINGS}
-			&& $self->piece($loc)  == Pawn
-			&& $self->piece($loc1) == King;
-		return Yes if $self->occup($loc1) && $self->color($loc1) != $color;
+			&& $self->piece($src) == Pawn
+			&& $self->piece($enemy) == King;
+		return Yes;
 	}
 	return No;
 }
