@@ -397,12 +397,16 @@ sub beat_destinations ($$;$$) {
 	my $color = shift;
 
 	(defined $piece ? $piece : $self->piece($loc)) == Pawn
-		? $::RULES{PAWNS_CAPTURING_BACKWARDS}
-			? $self->pawn_beat->[$loc]
-			: $self->pawn_beat_forward->[defined $color ? $color : $self->color($loc)][$loc]
-		: $::RULES{KINGS_LONG_RANGED}
-			? $self->king_beat->[$loc]
-			: $self->king_beat_short->[$loc];
+		? $::RULES{CAPTURING_IN_8_DIRECTIONS}
+			? $self->pawn_beat_8dirs->[$loc]
+			: $::RULES{PAWNS_CAPTURING_BACKWARDS}
+				? $self->pawn_beat->[$loc]
+				: $self->pawn_beat_forward->[defined $color ? $color : $self->color($loc)][$loc]
+		: $::RULES{CAPTURING_IN_8_DIRECTIONS}
+			? $self->king_beat_8dirs->[$loc]
+			: $::RULES{KINGS_LONG_RANGED}
+				? $self->king_beat->[$loc]
+				: $self->king_beat_short->[$loc];
 }
 
 sub apply_move ($) {
@@ -505,7 +509,9 @@ sub enclosed_figure ($$$) {
 	my $src = shift;
 	my $dst = shift;
 
-	my $locs = $self->enclosed_locs->[$src]{$dst}
+	my $locs = $::RULES{CAPTURING_IN_8_DIRECTIONS}
+		? $self->enclosed_8dirs_locs->[$src]{$dst}
+		: $self->enclosed_locs->[$src]{$dst}
 		or return NL;
 
 	my $figure_loc = NL;

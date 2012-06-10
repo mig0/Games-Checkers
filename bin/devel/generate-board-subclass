@@ -68,54 +68,89 @@ my @loc_direction_locs;
 my @pawn_step_locs = ([], []);
 my @pawn_beat_locs;
 my @pawn_beat_forward_locs = ([], []);
+my @pawn_beat_8dirs_locs;
 my @king_step_short_locs;
 my @king_beat_short_locs;
 my $king_step_str;
 my $king_beat_str;
+my $king_beat_8dirs_str;
 my $enclosed_locs_str;
+my $enclosed_locs_8dirs_str;
 
 for (0 .. $locs - 1) {
 	my ($x, $y) = loc_to_arr($_);
 	my @king_step_locs;
 	my @king_beat_locs;
+	my @king_beat_8dirs_locs;
 	my %enclosed_locs;
+	my %enclosed_8dirs_locs;
 	my @enclosed_locs1 = ();
 	my @enclosed_locs2 = ();
 	my @enclosed_locs3 = ();
 	my @enclosed_locs4 = ();
+	my @enclosed_locs5 = ();
+	my @enclosed_locs6 = ();
+	my @enclosed_locs7 = ();
+	my @enclosed_locs8 = ();
 	for my $i (1 .. $size - 1) {
 		my $l1 = arr_to_loc($x - $i, $y + $i);
 		my $l2 = arr_to_loc($x + $i, $y + $i);
 		my $l3 = arr_to_loc($x - $i, $y - $i);
 		my $l4 = arr_to_loc($x + $i, $y - $i);
+		my $l5 = arr_to_loc($x,  $y - 2 * $i);
+		my $l6 = arr_to_loc($x - 2 * $i,  $y);
+		my $l7 = arr_to_loc($x,  $y + 2 * $i);
+		my $l8 = arr_to_loc($x + 2 * $i,  $y);
 		push @loc_direction_locs, [ $l1, $l2, $l3, $l4 ] if $i == 1;
 		push @{$pawn_step_locs[0]}, [ $l1, $l2 ] if $i == 1;
 		push @{$pawn_step_locs[1]}, [ $l3, $l4 ] if $i == 1;
 		push @pawn_beat_locs, [ $l1, $l2, $l3, $l4 ] if $i == 2;
 		push @{$pawn_beat_forward_locs[0]}, [ $l1, $l2 ] if $i == 2;
 		push @{$pawn_beat_forward_locs[1]}, [ $l3, $l4 ] if $i == 2;
+		push @pawn_beat_8dirs_locs, [ $l1, $l2, $l3, $l4, $l5, $l6, $l7, $l8 ] if $i == 2;
 		push @king_step_short_locs, [ $l1, $l2, $l3, $l4 ] if $i == 1;
 		push @king_beat_short_locs, [ $l1, $l2, $l3, $l4 ] if $i == 2;
 		push @king_step_locs, $l1, $l2, $l3, $l4;
 		push @king_beat_locs, $l1, $l2, $l3, $l4 if $i > 1;
+		push @king_beat_8dirs_locs, $l1, $l2, $l3, $l4, $l5, $l6, $l7, $l8 if $i > 1;
 		@enclosed_locs1 = () if $l1 eq 'NL';
 		@enclosed_locs2 = () if $l2 eq 'NL';
 		@enclosed_locs3 = () if $l3 eq 'NL';
 		@enclosed_locs4 = () if $l4 eq 'NL';
+		@enclosed_locs5 = () if $l5 eq 'NL';
+		@enclosed_locs6 = () if $l6 eq 'NL';
+		@enclosed_locs7 = () if $l7 eq 'NL';
+		@enclosed_locs8 = () if $l8 eq 'NL';
 		$enclosed_locs{$l1} = [ @enclosed_locs1 ] if @enclosed_locs1;
 		$enclosed_locs{$l2} = [ @enclosed_locs2 ] if @enclosed_locs2;
 		$enclosed_locs{$l3} = [ @enclosed_locs3 ] if @enclosed_locs3;
 		$enclosed_locs{$l4} = [ @enclosed_locs4 ] if @enclosed_locs4;
+		$enclosed_8dirs_locs{$l1} = [ @enclosed_locs1 ] if @enclosed_locs1;
+		$enclosed_8dirs_locs{$l2} = [ @enclosed_locs2 ] if @enclosed_locs2;
+		$enclosed_8dirs_locs{$l3} = [ @enclosed_locs3 ] if @enclosed_locs3;
+		$enclosed_8dirs_locs{$l4} = [ @enclosed_locs4 ] if @enclosed_locs4;
+		$enclosed_8dirs_locs{$l5} = [ @enclosed_locs5 ] if @enclosed_locs5;
+		$enclosed_8dirs_locs{$l6} = [ @enclosed_locs6 ] if @enclosed_locs6;
+		$enclosed_8dirs_locs{$l7} = [ @enclosed_locs7 ] if @enclosed_locs7;
+		$enclosed_8dirs_locs{$l8} = [ @enclosed_locs8 ] if @enclosed_locs8;
 		push @enclosed_locs1, $l1 if $l1 ne 'NL';
 		push @enclosed_locs2, $l2 if $l2 ne 'NL';
 		push @enclosed_locs3, $l3 if $l3 ne 'NL';
 		push @enclosed_locs4, $l4 if $l4 ne 'NL';
+		push @enclosed_locs5, $l5 if $l5 ne 'NL';
+		push @enclosed_locs6, $l6 if $l6 ne 'NL';
+		push @enclosed_locs7, $l7 if $l7 ne 'NL';
+		push @enclosed_locs8, $l8 if $l8 ne 'NL';
 	}
 	$king_step_str .= format_items(\@king_step_locs);
 	$king_beat_str .= format_items(\@king_beat_locs);
+	$king_beat_8dirs_str .= format_items(\@king_beat_8dirs_locs);
 	$enclosed_locs_str .= "\t{ " . join(', ', map {
 		format_items($enclosed_locs{$_}, "$_ => ", 1)
 	} sort { $a <=> $b } keys %enclosed_locs) . " },\n";
+	$enclosed_locs_8dirs_str .= "\t{ " . join(', ', map {
+		format_items($enclosed_8dirs_locs{$_}, "$_ => ", 1)
+	} sort { $a <=> $b } keys %enclosed_8dirs_locs) . " },\n";
 }
 
 my $loc_directions_str =
@@ -134,6 +169,8 @@ my @pawn_beat_forward_strs = (
 	format_bunches($pawn_beat_forward_locs[0]),
 	format_bunches($pawn_beat_forward_locs[1]),
 );
+my $pawn_beat_8dirs_str =
+	format_bunches(\@pawn_beat_8dirs_locs);
 my $king_step_short_str =
 	format_bunches(\@king_step_short_locs);
 my $king_beat_short_str =
@@ -192,6 +229,9 @@ $pawn_beat_forward_strs[0]], [
 $pawn_beat_forward_strs[1]]
 ];
 
+use constant pawn_beat_8dirs => [
+$pawn_beat_8dirs_str];
+
 use constant king_step => [
 $king_step_str];
 
@@ -204,8 +244,14 @@ $king_step_short_str];
 use constant king_beat_short => [
 $king_beat_short_str];
 
+use constant king_beat_8dirs => [
+$king_beat_8dirs_str];
+
 use constant enclosed_locs => [
 $enclosed_locs_str];
+
+use constant enclosed_8dirs_locs => [
+$enclosed_locs_8dirs_str];
 
 1;
 ENDS

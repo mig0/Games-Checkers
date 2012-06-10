@@ -82,6 +82,13 @@ use constant pawn_beat_forward => [
 ]
 ];
 
+use constant pawn_beat_8dirs => [
+	[      5                         ], [  4                             ],
+	[      7                         ], [  6                             ],
+	[              1                 ], [          0                     ],
+	[              3                 ], [          2                     ],
+];
+
 use constant king_step => [
 	[      2,              5,              7         ],
 	[  2,  3,          4                             ],
@@ -118,7 +125,29 @@ use constant king_beat_short => [
 	[              3 ], [          2     ],
 ];
 
+use constant king_beat_8dirs => [
+	[      5,                              7                         ],
+	[  4                                                             ],
+	[      7                                                         ],
+	[  6                                                             ],
+	[              1                                                 ],
+	[          0                                                     ],
+	[              3                                                 ],
+	[          2,                              0                     ],
+];
+
 use constant enclosed_locs => [
+	{  5 => [  2 ],  7 => [  2,  5 ] },
+	{  4 => [  2 ] },
+	{  7 => [  5 ] },
+	{  6 => [  5 ] },
+	{  1 => [  2 ] },
+	{  0 => [  2 ] },
+	{  3 => [  5 ] },
+	{  0 => [  5,  2 ],  2 => [  5 ] },
+];
+
+use constant enclosed_8dirs_locs => [
 	{  5 => [  2 ],  7 => [  2,  5 ] },
 	{  4 => [  2 ] },
 	{  7 => [  5 ] },
