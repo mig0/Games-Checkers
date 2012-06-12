@@ -30,6 +30,7 @@ use SDL::Surface;
 use SDL::Video;
 use SDL::Image;
 use SDLx::Text;
+use SDL::GFX::Primitives;
 
 sub rect_to_xywh ($;$) {
 	my $surface = shift || die;
@@ -523,21 +524,27 @@ sub show_result ($$) {
 	$self->process_pending_events;
 }
 
-sub show_helper_msg ($$) {
+sub show_helper_buttons ($$) {
 	my $self = shift;
 	my @msgs = @_;
 
 	my $display = $self->{display};
 	my $y = 48;
 
-	my $text = SDLx::Text->new(
-		size    => 18,
-		color   => 0xffffdc,
-		shadow  => 1,
-		h_align => 'center',
-	);
-	$text->write_xy($display, $self->{helper_mid_x}, $y += 24, $_)
-		for @msgs;
+	map {
+		my $text = SDLx::Text->new(
+			size    => 18,
+			color   => 0xffffdc,
+			shadow  => 1,
+			x       => $self->{helper_mid_x},
+			y       => $y += 24,
+			h_align => 'center',
+			text    => $_,
+		);
+		SDL::GFX::Primitives::filled_ellipse_RGBA($display, $self->{helper_mid_x}, $y + 11, $text->w / 2 + 10, 12, 0xF0, 0xE0, 0xF0, 40);
+		$text->write_to($display);
+		[ $self->{helper_mid_x} - $text->w / 2, $y, $text->w, $text->h ]
+	} @msgs;
 }
 
 sub edit_board ($;$) {
@@ -562,12 +569,12 @@ sub edit_board ($;$) {
 
 	my $current = 0;
 
-	$self->show_helper_msg(
+	push @rects, $self->show_helper_buttons(
 		"a - random board",
 		"e - empty board",
-		"r - reset",
-		"ESC - reset or abort",
+		"r - reset board",
 		"Enter - finish",
+		"ESC - reset or abort",
 	);
 
 	while (1) {
@@ -593,6 +600,18 @@ sub edit_board ($;$) {
 		$self->show_title(sprintf "Edit Board (Balance: %+d)", $board->get_score);
 		my ($rv, $which, $is_second) = $self->wait_for_press(\@rects);
 
+		if ($rv == RECT_PRESSED) {
+			if ($which < 4) {
+				$current = $which;
+			} elsif ($which == 6) {
+				$rv = RESTART_PRESSED;
+			} elsif ($which == 8) {
+				$rv = QUIT_PRESSED;
+			} else {
+				$rv = KEY_PRESSED;
+				$which = (SDLK_a, SDLK_e, 0, SDLK_RETURN)[$which - 4];
+			}
+		}
 		if ($rv == QUIT_PRESSED) {
 			last if $board->equals($orig_board);
 			$rv = RESTART_PRESSED;
@@ -605,9 +624,6 @@ sub edit_board ($;$) {
 			$is_second || $board->chk($loc, @{$cp[$current]})
 				? $board->clr($loc)
 				: $board->set($loc, @{$cp[$current]});
-		}
-		if ($rv == RECT_PRESSED) {
-			$current = $which;
 		}
 		if ($rv == KEY_PRESSED) {
 			my $key_sym = $which;
