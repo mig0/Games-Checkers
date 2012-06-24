@@ -21,6 +21,7 @@ package Games::Checkers::SDL;
 use Games::Checkers::Constants;
 use Games::Checkers::Iterators;
 use Games::Checkers::Board;
+use Games::Checkers::Rules;
 
 use SDL;
 use SDL::Event;
@@ -528,8 +529,10 @@ sub show_helper_buttons ($$) {
 	my $self = shift;
 	my @msgs = @_;
 
+	$self->clear_helper;
+
 	my $display = $self->{display};
-	my $y = 48;
+	my $y = 50;
 
 	map {
 		my $text = SDLx::Text->new(
@@ -537,11 +540,11 @@ sub show_helper_buttons ($$) {
 			color   => 0xffffdc,
 			shadow  => 1,
 			x       => $self->{helper_mid_x},
-			y       => $y += 24,
+			y       => $y += 25,
 			h_align => 'center',
 			text    => $_,
 		);
-		SDL::GFX::Primitives::filled_ellipse_RGBA($display, $self->{helper_mid_x}, $y + 11, $text->w / 2 + 10, 12, 0xF0, 0xE0, 0xF0, 40);
+		SDL::GFX::Primitives::filled_ellipse_RGBA($display, $self->{helper_mid_x}, $y + 11, $text->w / 2 + 10, 12, 0xF0, 0xE0, 0xF0, 50);
 		$text->write_to($display);
 		[ $self->{helper_mid_x} - $text->w / 2, $y, $text->w, $text->h ]
 	} @msgs;
@@ -550,6 +553,8 @@ sub show_helper_buttons ($$) {
 sub edit_board ($;$) {
 	my $self = shift;
 	my $board = shift || $self->{board};
+
+	$self->{board} = $board;
 
 	my $orig_board = $board->clone;
 	my $display = $self->{display};
@@ -574,7 +579,7 @@ sub edit_board ($;$) {
 		"e - empty board",
 		"r - reset board",
 		"Enter - finish",
-		"ESC - reset or abort",
+		"Esc - reset or abort",
 	);
 
 	while (1) {
@@ -635,6 +640,96 @@ sub edit_board ($;$) {
 			}
 			if ($key_sym == SDLK_a) {
 				$board->init("random");
+			}
+		}
+	}
+
+	$self->clear_helper;
+
+	return $board;
+}
+
+sub select_menu ($$$) {
+	my $self = shift;
+	my $title = shift || "Please select";
+	my $items = shift || die "No items";
+	my $current = shift;
+	die "No array" unless ref($items) eq 'ARRAY';
+
+	my @rects = $self->show_helper_buttons(@$items);
+	my ($rv, $which, $is_second) = $self->wait_for_press(\@rects, "Esc - Cancel");
+
+	return $rv == RECT_PRESSED && $which < @$items
+		? $items->[$which]
+		: undef;
+}
+
+sub show_menu ($$) {
+	my $self = shift;
+	my $board = shift;
+
+	$self->show_title("Welcome to Checkers");
+
+	my $variant = shift || $::RULES{variant};
+	my $size = $board->size;
+
+	while (1) {
+		my @rects = $self->show_helper_buttons(
+			"Enter - Play Game",
+			"o - Opponents (C vs C)",
+			"v - Variant ($variant)",
+			"s - Board Size ($size)",
+			"e - Edit Board Pieces",
+			"c - Customize Rule Items",
+			"h - Show Game Rules",
+			"r - Restore Defaults",
+			"Esc - quit",
+		);
+
+		$self->show_board;
+		my ($rv, $which, $is_second) = $self->wait_for_press(\@rects);
+
+		if ($rv == RECT_PRESSED) {
+			if ($which == 7) {
+				$rv = RESTART_PRESSED;
+			} elsif ($which == 8) {
+				$rv = QUIT_PRESSED;
+			} else {
+				$rv = KEY_PRESSED;
+				$which = (SDLK_RETURN, SDLK_o, SDLK_v, SDLK_s, SDLK_e, SDLK_c, SDLK_h)[$which];
+			}
+		}
+		if ($rv == QUIT_PRESSED) {
+			return;
+		}
+		if ($rv == RESTART_PRESSED) {
+		}
+		if ($rv == BOARD_LOC_PRESSED) {
+			$board = $self->edit_board($board);
+		}
+		if ($rv == KEY_PRESSED) {
+			my $key_sym = $which;
+			if ($key_sym == SDLK_RETURN || $key_sym == SDLK_KP_ENTER) {
+				last;
+			}
+			if ($key_sym == SDLK_o) {
+			}
+			if ($key_sym == SDLK_v) {
+				my @variants = Games::Checkers::Rules::get_main_variants();
+				my $variant0 = $self->select_menu('Variant', \@variants, $variant);
+				if (defined $variant0 && $variant0 ne $variant) {
+					Games::Checkers::Rules::set_variant($variant = $variant0);
+					$board = Games::Checkers::Board->new;
+				}
+			}
+			if ($key_sym == SDLK_s) {
+			}
+			if ($key_sym == SDLK_e) {
+				$board = $self->edit_board($board);
+			}
+			if ($key_sym == SDLK_c) {
+			}
+			if ($key_sym == SDLK_h) {
 			}
 		}
 	}

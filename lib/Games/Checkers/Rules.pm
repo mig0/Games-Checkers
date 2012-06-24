@@ -203,7 +203,7 @@ sub set_variant ($%) {
 	$params{BOTTOM_LEFT_CELL} = $invert ? 0 : 1
 		if defined $invert;
 
-	%::RULES = (base => $base);
+	%::RULES = (variant => $base, base => $base);
 	for (keys %{$variant_rules{international}}) {
 		$::RULES{$_} = defined $params{$_} ? $params{$_} : $ENV{$_};
 	}
@@ -218,6 +218,14 @@ sub set_variant ($%) {
 	}
 
 	return 1;
+}
+
+sub get_main_variants () {
+	return map {
+		my $entry = $variant_rules{$_};
+		ref($entry) eq 'HASH' && $entry->{PDN_GAME_TYPE}
+			? ($_) : ()
+	} keys %variant_rules;
 }
 
 set_variant('default');

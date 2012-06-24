@@ -29,7 +29,8 @@ sub new ($%) {
 	my $class = shift;
 	my %params = @_;
 
-	Games::Checkers::Rules::set_variant($params{variant});
+	my $variant = $params{variant};
+	Games::Checkers::Rules::set_variant($variant);
 
 	$ENV{DUMB_CHARS} = 1 if $params{dumb_chars};
 
@@ -46,6 +47,7 @@ sub new ($%) {
 	};
 
 	my $self = {
+		variant => $variant,
 		title => $title,
 		board => $board,
 		color => $color,
@@ -69,7 +71,19 @@ sub new ($%) {
 
 	$self->edit_board if $params{edit_board};
 
+	$self->show_menu;
+
 	$self->init;
+}
+
+sub show_menu ($) {
+	my $self = shift;
+
+	if ($self->{frontend}) {
+		$self->{board} = $self->{frontend}->show_menu($self->{board});
+	}
+
+	$self->quit unless $self->{board};
 }
 
 sub init ($) {
