@@ -77,6 +77,46 @@ sub new ($$$%) {
 	die "No expected image dir $image_dir\n"
 		unless -d $image_dir && -x _;
 
+	my $fullscreen = $params{fullscreen} ? 1 : 0;
+
+	my $self = {
+		board => $board,
+		title => $title,
+		pieces => {
+			&Pawn => {
+				&White => SDL::Image::load("$image_dir/pawn-white.png"),
+				&Black => SDL::Image::load("$image_dir/pawn-black.png"),
+			},
+			&King => {
+				&White => SDL::Image::load("$image_dir//king-white.png"),
+				&Black => SDL::Image::load("$image_dir/king-black.png"),
+			},
+		},
+		ply_strs => [],
+		ply_o => 0,
+		ply_l => 0,
+		event => SDL::Event->new,
+		text => SDLx::Text->new(shadow => 1, shadow_offset => 2, size => 20),
+		mouse_pressed => 0,
+		skip_unpress => 0,
+		fullscreen => $fullscreen,
+		image_dir => $image_dir,
+	};
+
+	bless $self, $class;
+
+	$self->init_video;
+
+	SDL::Video::wm_set_caption("Checkers: $title", "Checkers");
+
+	return $self;
+}
+
+sub init_video ($) {
+	my $self = shift;
+
+	my $board = $self->{board};
+
 	my $size_x = $board->size_x;
 	my $size_y = $board->size_y;
 
@@ -93,16 +133,13 @@ sub new ($$$%) {
 	my $b_y = ($h - $b_h) / 2;
 	my $helper_mid_x = ($w + $helper_x) / 2;
 
-	my $fullscreen = $params{fullscreen} ? 1 : 0;
-
 	SDL::init(SDL_INIT_VIDEO);
-	my $mode = SDL_HWSURFACE | SDL_HWACCEL | ($fullscreen && SDL_FULLSCREEN);
+	my $mode = SDL_HWSURFACE | SDL_HWACCEL | ($self->{fullscreen} && SDL_FULLSCREEN);
 	my $display = SDL::Video::set_video_mode($w, $h, 32, $mode);
-
-	SDL::Video::wm_set_caption("Checkers: $title", "Checkers");
 
 	my $bg = SDL::Surface->new(SDL_HWSURFACE | SDL_PHYSPAL, $w, $h);
 
+	my $image_dir = $self->{image_dir};
 	fill_rect_tiled($bg, 0, SDL::Image::load("$image_dir/bg-tile.jpg"));
 
 	SDL::Video::fill_rect($bg, SDL::Rect->new($b_x - 3, $b_y - 3, $b_w + 6, $b_h + 6), 0x50d050ff);
@@ -140,19 +177,8 @@ sub new ($$$%) {
 		}
 	}
 
-	my $self = {
-		board => $board,
-		title => $title,
-		pieces => {
-			&Pawn => {
-				&White => SDL::Image::load("$image_dir/pawn-white.png"),
-				&Black => SDL::Image::load("$image_dir/pawn-black.png"),
-			},
-			&King => {
-				&White => SDL::Image::load("$image_dir/king-white.png"),
-				&Black => SDL::Image::load("$image_dir/king-black.png"),
-			},
-		},
+	%$self = (
+		%$self,
 		w => $w,
 		h => $h,
 		size_x => $size_x,
@@ -164,21 +190,10 @@ sub new ($$$%) {
 		title_height => $title_height,
 		helper_x => $helper_x,
 		helper_mid_x => $helper_mid_x,
-		ply_strs => [],
-		ply_o => 0,
-		ply_l => 0,
-		ply_m => int($h / 20 - 1) * 2,
 		display => $display,
 		bg => $bg,
-		title_height => $title_height,
-		event => SDL::Event->new,
-		text => SDLx::Text->new(shadow => 1, shadow_offset => 2, size => 20),
-		mouse_pressed => 0,
-		skip_unpress => 0,
-		fullscreen => $fullscreen,
-	};
-
-	bless $self, $class;
+		ply_m => int($h / 20 - 1) * 2,
+	);
 
 	return $self;
 }
@@ -664,16 +679,18 @@ sub select_menu ($$$) {
 		: undef;
 }
 
-sub show_menu ($$) {
+sub show_menu ($;$$) {
 	my $self = shift;
-	my $board = shift;
+	my $board = shift || $self->{board};
+
+	$self->{board} = $board;
 
 	$self->show_title("Welcome to Checkers");
 
 	my $variant = shift || $::RULES{variant};
-	my $size = $board->size;
 
 	while (1) {
+		my $size = $self->{board}->size;
 		my @rects = $self->show_helper_buttons(
 			"Enter - Play Game",
 			"o - Opponents (C vs C)",
@@ -705,7 +722,7 @@ sub show_menu ($$) {
 		if ($rv == RESTART_PRESSED) {
 		}
 		if ($rv == BOARD_LOC_PRESSED) {
-			$board = $self->edit_board($board);
+			$self->edit_board;
 		}
 		if ($rv == KEY_PRESSED) {
 			my $key_sym = $which;
@@ -719,13 +736,14 @@ sub show_menu ($$) {
 				my $variant0 = $self->select_menu('Variant', \@variants, $variant);
 				if (defined $variant0 && $variant0 ne $variant) {
 					Games::Checkers::Rules::set_variant($variant = $variant0);
-					$board = Games::Checkers::Board->new;
+					$self->{board} = Games::Checkers::Board->new;
+					$self->init_video;
 				}
 			}
 			if ($key_sym == SDLK_s) {
 			}
 			if ($key_sym == SDLK_e) {
-				$board = $self->edit_board($board);
+				$self->edit_board;
 			}
 			if ($key_sym == SDLK_c) {
 			}
@@ -736,7 +754,7 @@ sub show_menu ($$) {
 
 	$self->clear_helper;
 
-	return $board;
+	return $self->{board};
 }
 
 1;
