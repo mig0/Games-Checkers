@@ -679,18 +679,21 @@ sub select_menu ($$$) {
 		: undef;
 }
 
-sub show_menu ($;$$) {
+sub show_menu ($;$) {
 	my $self = shift;
 	my $board = shift || $self->{board};
 
 	$self->{board} = $board;
 
-	$self->show_title("Welcome to Checkers");
-
-	my $variant = shift || $::RULES{variant};
+	my $orig_board = $board->clone;
+	my %orig_RULES = %::RULES;
 
 	while (1) {
+		$self->show_title("Welcome to Checkers");
+
+		my $variant = $::RULES{variant};
 		my $size = $self->{board}->size;
+
 		my @rects = $self->show_helper_buttons(
 			"Enter - Play Game",
 			"o - Opponents (C vs C)",
@@ -720,6 +723,11 @@ sub show_menu ($;$$) {
 			return;
 		}
 		if ($rv == RESTART_PRESSED) {
+			unless ($self->{board}->equals($orig_board) && join("\n", %::RULES) eq join("\n", %orig_RULES) {
+				%::RULES = %orig_RULES;
+				$self->{board} = $orig_board->clone;
+				$self->init_video;
+			}
 		}
 		if ($rv == BOARD_LOC_PRESSED) {
 			$self->edit_board;
@@ -741,6 +749,15 @@ sub show_menu ($;$$) {
 				}
 			}
 			if ($key_sym == SDLK_s) {
+				my $size0 = $self->select_menu('Board Size', [qw(
+					4x4 6x6 8x8
+					8x10 10x8 10x10
+					12x12 14x14 16x16
+				)]);
+				if (defined $size0 && $size0 ne $size) {
+					$self->{board} = Games::Checkers::Board->new(undef, $size0);
+					$self->init_video;
+				}
 			}
 			if ($key_sym == SDLK_e) {
 				$self->edit_board;

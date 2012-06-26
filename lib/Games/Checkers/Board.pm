@@ -138,7 +138,7 @@ sub notation ($) {
 }
 
 sub size ($) {
-	return $_[0]->size_x . "x" . return $_[0]->size_y;
+	return $_[0]->size_x . "x" . $_[0]->size_y;
 }
 
 sub size_x_1 ($) {
