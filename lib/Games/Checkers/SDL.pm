@@ -559,7 +559,7 @@ sub show_helper_buttons ($$) {
 			h_align => 'center',
 			text    => $_,
 		);
-		SDL::GFX::Primitives::filled_ellipse_RGBA($display, $self->{helper_mid_x}, $y + 11, $text->w / 2 + 10, 12, 0xF0, 0xE0, 0xF0, 50);
+		SDL::GFX::Primitives::filled_ellipse_RGBA($display, $self->{helper_mid_x}, $y + 11, $text->w / 2 + 10, 12, 0xF0, 0xE0, 0xF0, 55);
 		$text->write_to($display);
 		[ $self->{helper_mid_x} - $text->w / 2, $y, $text->w, $text->h ]
 	} @msgs;
@@ -590,11 +590,11 @@ sub edit_board ($;$) {
 	my $current = 0;
 
 	push @rects, $self->show_helper_buttons(
-		"a - random board",
-		"e - empty board",
-		"r - reset board",
-		"Enter - finish",
-		"Esc - reset or abort",
+		"Finish editing (Enter)",
+		"Random board (a)",
+		"Empty board (e)",
+		"Reset board (r)",
+		"Reset or abort (Esc)",
 	);
 
 	while (1) {
@@ -623,13 +623,13 @@ sub edit_board ($;$) {
 		if ($rv == RECT_PRESSED) {
 			if ($which < 4) {
 				$current = $which;
-			} elsif ($which == 6) {
+			} elsif ($which == 7) {
 				$rv = RESTART_PRESSED;
 			} elsif ($which == 8) {
 				$rv = QUIT_PRESSED;
 			} else {
 				$rv = KEY_PRESSED;
-				$which = (SDLK_a, SDLK_e, 0, SDLK_RETURN)[$which - 4];
+				$which = (SDLK_RETURN, SDLK_a, SDLK_e, 0)[$which - 4];
 			}
 		}
 		if ($rv == QUIT_PRESSED) {
@@ -695,15 +695,15 @@ sub show_menu ($;$) {
 		my $size = $self->{board}->size;
 
 		my @rects = $self->show_helper_buttons(
-			"Enter - Play Game",
-			"o - Opponents (C vs C)",
-			"v - Variant ($variant)",
-			"s - Board Size ($size)",
-			"e - Edit Board Pieces",
-			"c - Customize Rule Items",
-			"h - Show Game Rules",
-			"r - Restore Defaults",
-			"Esc - quit",
+			"Play Game (Enter)",
+			"Opponents [C vs C]",
+			"Variant [$variant]",
+			"Board Size [$size]",
+			"Edit Board Pieces (e)",
+			"Customize Rule Items (c)",
+			"Show Game Rules (h)",
+			"Restore Defaults (r)",
+			"Quit (Esc)",
 		);
 
 		$self->show_board;
@@ -748,7 +748,7 @@ sub show_menu ($;$) {
 					$self->init_video;
 				}
 			}
-			if ($key_sym == SDLK_s) {
+			if ($key_sym == SDLK_s || $key_sym == SDLK_b) {
 				my $size0 = $self->select_menu('Board Size', [qw(
 					4x4 6x6 8x8
 					8x10 10x8 10x10
