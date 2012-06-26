@@ -723,7 +723,7 @@ sub show_menu ($;$) {
 			return;
 		}
 		if ($rv == RESTART_PRESSED) {
-			unless ($self->{board}->equals($orig_board) && join("\n", %::RULES) eq join("\n", %orig_RULES) {
+			unless ($self->{board}->equals($orig_board) && join("\n", %::RULES) eq join("\n", %orig_RULES)) {
 				%::RULES = %orig_RULES;
 				$self->{board} = $orig_board->clone;
 				$self->init_video;
