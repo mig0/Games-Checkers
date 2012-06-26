@@ -53,6 +53,7 @@ our %variant_rules = (
 	},
 	russian_give_away => {
 		base => 'russian',
+		PDN_GAME_TYPE             => 00,
 		GIVE_AWAY                 => 1,
 	},
 	russian_10x8 => {
@@ -75,6 +76,7 @@ our %variant_rules = (
 	},
 	english_give_away => {
 		base => 'english',
+		PDN_GAME_TYPE             => 00,
 		GIVE_AWAY                 => 1,
 	},
 	italian => {
@@ -223,7 +225,7 @@ sub set_variant ($%) {
 sub get_main_variants () {
 	return map {
 		my $entry = $variant_rules{$_};
-		ref($entry) eq 'HASH' && $entry->{PDN_GAME_TYPE}
+		ref($entry) eq 'HASH' && defined $entry->{PDN_GAME_TYPE}
 			? ($_) : ()
 	} keys %variant_rules;
 }
