@@ -436,8 +436,22 @@ sub hold ($) {
 	return $rv == QUIT_PRESSED ? QUIT_PRESSED : MISC_PRESSED;
 }
 
-sub show_board ($) {
+sub dim_display_rect ($$;$) {
 	my $self = shift;
+	my $rect = shift;
+	my $alpha = shift || 128;
+
+	my $display = $self->{display};
+
+	my ($x, $y, $w, $h) = rect_to_xywh($display, $rect);
+	my $dim_surface = SDL::Surface->new(SDL_ASYNCBLIT | SDL_HWSURFACE, $w, $h, 8);
+	SDL::Video::blit_surface($dim_surface, 0, $display, SDL::Rect->new($x, $y, $w, $h))
+		if SDL::Video::set_alpha($dim_surface, SDL_SRCALPHA, $alpha) == 0;
+}
+
+sub show_board ($;$) {
+	my $self = shift;
+	my $dim = shift || 0;
 
 	my $display = $self->{display};
 	my $board = $self->{board};
@@ -457,6 +471,8 @@ sub show_board ($) {
 			);
 		}
 	}
+
+	$self->dim_display_rect([ $self->{b_x}, $self->{b_y}, $self->{b_w}, $self->{b_h} ], 60) if $dim;
 
 	$self->process_pending_events;
 }
@@ -706,7 +722,7 @@ sub show_menu ($;$) {
 			"Quit (Esc)",
 		);
 
-		$self->show_board;
+		$self->show_board(1);
 		my ($rv, $which, $is_second) = $self->wait_for_press(\@rects);
 
 		if ($rv == RECT_PRESSED) {
