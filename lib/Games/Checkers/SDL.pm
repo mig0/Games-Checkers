@@ -576,6 +576,7 @@ sub show_helper_buttons ($$) {
 			text    => $_,
 		);
 		SDL::GFX::Primitives::filled_ellipse_RGBA($display, $self->{helper_mid_x}, $y + 11, $text->w / 2 + 10, 12, 0xF0, 0xE0, 0xF0, 55);
+		SDL::GFX::Primitives::ellipse_RGBA(       $display, $self->{helper_mid_x}, $y + 11, $text->w / 2 + 10, 12, 0x00, 0x00, 0x00, 55);
 		$text->write_to($display);
 		[ $self->{helper_mid_x} - $text->w / 2, $y, $text->w, $text->h ]
 	} @msgs;
