@@ -223,7 +223,7 @@ sub set_variant ($%) {
 }
 
 sub get_main_variants () {
-	return map {
+	return sort map {
 		my $entry = $variant_rules{$_};
 		ref($entry) eq 'HASH' && defined $entry->{PDN_GAME_TYPE}
 			? ($_) : ()
