@@ -71,7 +71,7 @@ sub new ($%) {
 
 	$self->edit_board if $params{edit_board};
 
-	$self->show_menu;
+	$self->show_menu if $params{show_menu};
 
 	$self->init;
 }

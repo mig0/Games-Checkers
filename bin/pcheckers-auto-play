@@ -27,6 +27,7 @@ use Getopt::Long qw(:config no_ignore_case bundling);
 use Games::Checkers::Game;
 
 my $script_name = ($0 =~ m:([^/]+)$:, $1);
+my $no_menu = 0;
 my $edit_board = 0;
 my $size = undef;
 my $board = undef;  # here the string, but could be Board too
@@ -52,6 +53,7 @@ sub show_help (;$) {
 			-h --help          show this help and exit
 			-s --size SIZE     specify the board size, like "12" or "10x8"
 			-e --edit          allow editing board pieces before the start
+			-n --no-menu       skip interactive menu and start to play immediately
 			-b --board STR     init board with non-default setup, like "b4,d2/a3/h6"
 			-B --black         cause pieces of the opposite color to start the game
 			-l --level N       strength level (default: $level)
@@ -73,6 +75,7 @@ sub show_help (;$) {
 GetOptions(
 	"h|help"        => sub { show_help(0) },
 	"s|size=s"      => \$size,
+	"n|no-menu"     => \$no_menu,
 	"e|edit"        => \$edit_board,
 	"b|board=s"     => \$board,
 	"B|black"       => \$black,
@@ -97,6 +100,7 @@ my $game = Games::Checkers::Game->new(
 	level => $level,
 	random => $random eq 'none' ? 0 : $random || 1,
 	max_move_num => $max_move_num,
+	show_menu => !$no_menu,
 	edit_board => $edit_board,
 	use_term => $use_term,
 	dumb_term => $dumb_term,
