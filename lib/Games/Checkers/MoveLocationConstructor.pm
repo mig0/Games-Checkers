@@ -45,7 +45,7 @@ sub init_work_board ($) {
 
 	return $self->{work_board}
 		? $self->{work_board}->copy($self->{orig_board})
-		: $self->{work_board} = $self->{orig_board}->clone;
+		: ($self->{work_board} = $self->{orig_board}->clone);
 }
 
 sub source ($$) {
