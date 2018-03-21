@@ -1,6 +1,8 @@
 #!/usr/bin/perl
 
-# Just run the script; also try: COMPACT_BOARD=1 RANDOM_BOARD=1 script
+# Just run the script.
+# Also try: COMPACT_BOARD=1 BOARD=random examples/print-initial-moves
+# Or: VARIANT=russian BOARD_SIZE=6 BOARD=5//4/8,18 EXPAND=1 examples/print-initial-moves
 
 use strict;
 use warnings;
@@ -9,12 +11,15 @@ use FindBin;
 use lib "$FindBin::Bin/../lib";
 
 use Games::Checkers::Board;
+use Games::Checkers::Rules;
 use Games::Checkers::Constants;
 use Games::Checkers::MoveConstants;
 use Games::Checkers::BoardTree;
 
 my $board = Games::Checkers::Board->new($ENV{BOARD}, $ENV{BOARD_SIZE});
 my $color = $ENV{BLACK} ? Black : White;
+
+Games::Checkers::Rules::set_variant($ENV{VARIANT});
 
 my $move_counter = Games::Checkers::CountMoveList->new($board, $color);
 die "Internal problem" unless $move_counter->{status} == Ok;
@@ -30,7 +35,7 @@ print $board_dump unless @$expanded_nodes;
 foreach (@$expanded_nodes) {
 	my $board = $_->{board};
 	my $score = $board->get_score($color = $color == White ? Black : White);
-	print $board->dump($board_dump, "$cost " . $_->{move}->dump($board));
+	print $board->dump($board_dump, "$score " . $_->{move}->dump($board));
 
 	if ($ENV{EXPAND}) {
 		my $board_tree = Games::Checkers::BoardTree->new($board, $color, $ENV{LEVEL});
@@ -38,6 +43,6 @@ foreach (@$expanded_nodes) {
 
 		$board->apply_move($move);
 		$score = $board->get_score($color = $color == White ? Black : White);
-		print $board->dump(3, "$cost " . $move->dump($board));
+		print $board->dump(3, "$score " . $move->dump($board));
 	}
 }
