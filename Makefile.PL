@@ -2,6 +2,18 @@ use 5.005;
 
 use ExtUtils::MakeMaker;
 
+# ugly trick to work around a bug in these tools, see discussion in
+# https://github.com/Perl-Toolchain-Gang/ExtUtils-Manifest/issues/5
+require ExtUtils::Manifest;
+sub my_find {
+	if (ref($_[0]) eq 'HASH') {
+		delete $_[0]->{follow};
+		delete $_[0]->{follow_fast};
+	}
+	File::Find::find(@_);
+}
+*ExtUtils::Manifest::find = \&main::my_find;
+
 WriteMakefile(
 	NAME => 'Games::Checkers',
 	DISTNAME => 'Games-Checkers',
