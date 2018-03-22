@@ -46,7 +46,7 @@ Games::Checkers - Play the Checkers games
     }
 
     $game->show_result;
-    
+
 # Or the same on a lower level:
 
     # automatic computer-vus-computer play script
@@ -174,7 +174,7 @@ Chess notation:
    |---+---+---+---+---+---+---+---|
  1 | O |###| O |###| O |###| O |###|
    +-------------------------------+
-     a   b   c   d   e   f   g   h  
+     a   b   c   d   e   f   g   h
 
 Numerical notation:
 
@@ -230,7 +230,7 @@ is captured and removed from the board.
 In some variants, if in the course of single or multiple jumps the man
 reaches the last rank, becoming a king, the turn shifts to the opponent;
 no further 'continuation' jump is possible.
- 
+
 =head2 The kings
 
 When a single piece reaches the last rank of the board by reason of a move,

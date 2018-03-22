@@ -19,7 +19,7 @@ use warnings;
 package Games::Checkers::ExpandMoveList;
 
 use base 'Games::Checkers::MoveLocationConstructor';
-use Games::Checkers::Constants; 
+use Games::Checkers::Constants;
 
 sub new ($$$) {
 	my $class = shift;
