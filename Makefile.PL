@@ -34,8 +34,7 @@ sub MY::postamble {
 install :: pure_install doc_install share_install
 	$(NOECHO) $(NOOP)
 
-prefix = /usr/local
-sharedir = $(prefix)/share
+sharedir = $(PREFIX)/share
 DATADIR = $(sharedir)/pcheckers
 
 INSTALL = install -c
