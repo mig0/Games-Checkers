@@ -44,7 +44,14 @@ CUT = cut
 
 share_install:
 	$(INSTALL) -d -m 755 $(DESTDIR)$(DATADIR)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(DATADIR)/doc
+	$(INSTALL) -d -m 755 $(DESTDIR)$(DATADIR)/examples
 	$(INSTALL) -d -m 755 $(DESTDIR)$(DATADIR)/games
+
+	@for file in CHANGES COPYING INSTALL README TODO doc/* examples/*; do \
+		echo install: $(DESTDIR)$(DATADIR)/$$file; \
+		$(INSTALL) -m 644 $$file $(DESTDIR)$(DATADIR)/$$file; \
+	done
 
 	@for dir in images games/british games/internt games/italian games/russian spec; do \
 		$(INSTALL) -d -m 755 $(DESTDIR)$(DATADIR)/$$dir; \
