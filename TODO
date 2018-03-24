@@ -1,5 +1,5 @@
 Things to add in the future versions:
 
-* Support rules for all national Checkers variants (about 15).
-
-* Add interactive play.
+* Add interactive play for 1 and 2 players.
+* Add auto draw condition rather than endless games.
+* Improve GUI.
