@@ -259,23 +259,24 @@ forward directions.
     Games::Checkers::Board::_14x14
     Games::Checkers::Board::_16x16
     Games::Checkers::BoardTree
-    Games::Checkers::BoardTreeNode
     Games::Checkers::Constants
-    Games::Checkers::CountMoveList
     Games::Checkers::CreateMoveList
-    Games::Checkers::CreateUniqueMove
-    Games::Checkers::CreateVergeMove
     Games::Checkers::DeclareConstant
     Games::Checkers::ExpandMoveList
-    Games::Checkers::FigureIterator
     Games::Checkers::Game
     Games::Checkers::Iterators
-    Games::Checkers::LocationIterator
     Games::Checkers::Move
     Games::Checkers::MoveConstants
     Games::Checkers::MoveLocationConstructor
     Games::Checkers::PDNParser
+    Games::Checkers::Rules
     Games::Checkers::SDL
+    Games::Checkers::BoardTreeNode
+    Games::Checkers::CountMoveList
+    Games::Checkers::CreateUniqueMove
+    Games::Checkers::CreateVergeMove
+    Games::Checkers::FigureIterator
+    Games::Checkers::LocationIterator
 
 =head1 SEE ALSO
 
