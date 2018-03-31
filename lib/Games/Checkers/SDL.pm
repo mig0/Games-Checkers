@@ -449,9 +449,11 @@ sub dim_display_rect ($$;$) {
 		if SDL::Video::set_alpha($dim_surface, SDL_SRCALPHA, $alpha) == 0;
 }
 
-sub show_board ($;$) {
+sub show_board ($%) {
 	my $self = shift;
-	my $dim = shift || 0;
+	my %params = @_;
+
+	my $dim = $params{dim} || 0;
 
 	my $display = $self->{display};
 	my $board = $self->{board};
@@ -472,7 +474,7 @@ sub show_board ($;$) {
 		}
 	}
 
-	$self->dim_display_rect([ $self->{b_x}, $self->{b_y}, $self->{b_w}, $self->{b_h} ], 60) if $dim;
+	$self->dim_display_rect([ $self->{b_x}, $self->{b_y}, $self->{b_w}, $self->{b_h} ], 75) if $dim;
 
 	$self->process_pending_events;
 }
@@ -723,7 +725,7 @@ sub show_menu ($;$) {
 			"Quit (Esc)",
 		);
 
-		$self->show_board(1);
+		$self->show_board(dim => 1);
 		my ($rv, $which, $is_second) = $self->wait_for_press(\@rects);
 
 		if ($rv == RECT_PRESSED) {

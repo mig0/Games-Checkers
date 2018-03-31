@@ -35,7 +35,7 @@ print $board_dump unless @$expanded_nodes;
 foreach (@$expanded_nodes) {
 	my $board = $_->{board};
 	my $score = $board->get_score($color = $color == White ? Black : White);
-	print $board->dump($board_dump, "$score " . $_->{move}->dump($board));
+	print $board->dump(sprefix => $board_dump, cprefix => "$score " . $_->{move}->dump($board));
 
 	if ($ENV{EXPAND}) {
 		my $board_tree = Games::Checkers::BoardTree->new($board, $color, $ENV{LEVEL});
@@ -43,6 +43,6 @@ foreach (@$expanded_nodes) {
 
 		$board->apply_move($move);
 		$score = $board->get_score($color = $color == White ? Black : White);
-		print $board->dump(3, "$score " . $move->dump($board));
+		print $board->dump(sprefix => 3, cprefix => "$score " . $move->dump($board));
 	}
 }

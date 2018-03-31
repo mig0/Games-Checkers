@@ -546,11 +546,13 @@ sub enclosed_figure ($$$) {
 #     a   b   c   d   e   f   g   h
 #
 
-sub dump ($;$$$) {
+sub dump ($%) {
 	my $self = shift;
-	my $sprefix = shift || "";
-	my $cprefix = shift || "";
-	my $compact = shift || $ENV{COMPACT_BOARD};
+	my %params = @_;
+
+	my $sprefix = $params{sprefix} || "";
+	my $cprefix = $params{cprefix} || "";
+	my $compact = $params{compact} || $ENV{COMPACT_BOARD};
 
 	my $char_sets = [
 		{

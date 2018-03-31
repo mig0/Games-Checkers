@@ -164,17 +164,18 @@ sub hold ($;$) {
 	}
 }
 
-sub show_board ($) {
+sub show_board ($%) {
 	my $self = shift;
+	my %params = @_;
 
 	if ($self->{frontend}) {
-		$self->call_frontend('show_board');
+		$self->call_frontend('show_board', %params);
 	} else {
 		my $title = $self->{title};
 		my $indent = int((37 - length($title)) / 2);
 		print "\e[1;1H\e[?25l" unless $self->{dumb_term};
 		print " " x $indent, $title, "\n";
-		print $self->{board}->dump;
+		print $self->{board}->dump(%params);
 		print "\e[?25h" unless $self->{dumb_term};
 	}
 }
