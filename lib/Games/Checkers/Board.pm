@@ -546,6 +546,67 @@ sub enclosed_figure ($$$) {
 #     a   b   c   d   e   f   g   h
 #
 
+my $USE_UNICODE = $ENV{USE_UNICODE} // !$ENV{DUMB_CHARS} && ($ENV{LANG} || "") =~ /utf-?8/i;
+
+my $char_sets = [
+	{
+		tlc => "+",
+		trc => "+",
+		blc => "+",
+		brc => "+",
+		vcl => "|",
+		vll => "|",
+		vrl => "|",
+		hcl => "-",
+		htl => "-",
+		hbl => "-",
+		ccl => "+",
+		bcs => "",
+		bce => "",
+		bcf => " ",
+		wcs => "",
+		wce => "",
+		wcf => "#",
+		dcf => ".",
+		b_p => "@",
+		b_k => "&",
+		w_p => "O",
+		w_k => "8",
+		b_c => "2",
+		w_c => "1",
+	},
+	{
+		tlc => "\e)0\016l\017",
+		trc => "\016k\017",
+		blc => "\016m\017",
+		brc => "\016j\017",
+		vcl => "\016x\017",
+		vll => "\016t\017",
+		vrl => "\016u\017",
+		hcl => "\016q\017",
+		htl => "\016w\017",
+		hbl => "\016v\017",
+		ccl => "\016n\017",
+		bcs => "\e[7m",
+		bce => "\e[0m",
+		bcs => "",
+		bce => "",
+		bcf => " ",
+		wcs => "",
+		wce => "",
+		wcs => "\e[7m",
+		wce => "\e[0m",
+		wcf => " ",
+		dcf => $USE_UNICODE ? "·" : ".",
+		b_p => $USE_UNICODE ? "⛀" : "@",
+		b_k => $USE_UNICODE ? "⛁" : "&",
+		w_p => $USE_UNICODE ? "⛂" : "O",
+		w_k => $USE_UNICODE ? "⛃" : "8",
+		b_c => $USE_UNICODE ? "37" : "2",
+		w_c => $USE_UNICODE ? "97" : "1",
+	},
+];
+
 sub dump ($%) {
 	my $self = shift;
 	my %params = @_;
@@ -554,50 +615,11 @@ sub dump ($%) {
 	my $cprefix = $params{cprefix} || "";
 	my $compact = $params{compact} || $ENV{COMPACT_BOARD};
 
-	my $char_sets = [
-		{
-			tlc => "+",
-			trc => "+",
-			blc => "+",
-			brc => "+",
-			vcl => "|",
-			vll => "|",
-			vrl => "|",
-			hcl => "-",
-			htl => "-",
-			hbl => "-",
-			ccl => "+",
-			bcs => "",
-			bce => "",
-			bcf => " ",
-			wcs => "",
-			wce => "",
-			wcf => "#",
-		},
-		{
-			tlc => "\e)0\016l\017",
-			trc => "\016k\017",
-			blc => "\016m\017",
-			brc => "\016j\017",
-			vcl => "\016x\017",
-			vll => "\016t\017",
-			vrl => "\016u\017",
-			hcl => "\016q\017",
-			htl => "\016w\017",
-			hbl => "\016v\017",
-			ccl => "\016n\017",
-			bcs => "\e[0;7m",
-			bce => "\e[0m",
-			bcs => "",
-			bce => "",
-			bcf => " ",
-			wcs => "",
-			wce => "",
-			wcs => "\e[0;7m",
-			wce => "\e[0m",
-			wcf => " ",
-		},
-	];
+	# one normal and 3 compact modes (compact: 0, 1, 2, *)
+	my $compact1 = $compact && $compact eq 1;
+	my $compact2 = $compact && $compact eq 2;
+	my $x_label_space = $compact1 ? "" : $compact2 ? " " : "   ";
+
 	my %ch = %{$char_sets->[$ENV{DUMB_CHARS} ? 0 : 1]};
 
 	my $size_x   = $self->size_x;
@@ -605,26 +627,46 @@ sub dump ($%) {
 	my $size_x_1 = $self->size_x_1;
 	my $size_x_2 = $self->size_x_2;
 
+	my $src = $params{src};
+	my $dst = $params{dst};
+	my $postponed_captures = $params{postponed_captures} || {};
+
 	my $str = "";
 	$str .= "\n";
 	$str .= "   " . $ch{tlc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{htl}" x $size_x_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{trc}\n"
 		unless $compact;
 	for (my $y = $size_y; $y >= 1; $y--) {
-		$str .= sprintf("%2d", $y) . " $ch{vcl}";
+		$str .= sprintf("%-2d", $y);
+		$str .= " $ch{vcl}"
+			unless $compact1 || $compact2;
 		for (my $x = 1; $x <= $size_x; $x++) {
 			my $loc = $self->arr_to_loc($x, $y);
 			if ($loc != NL) {
-				my $ch0 = $ch{bcf};
-				my $is_king = $self->piece($loc) == King;
-				$ch0 = $self->white($loc) ? $is_king ? "8" : "O" : $is_king ? "&" : "@"
-					if $self->occup($loc);
-				$ch0 = $self->white($loc) ? "\e[1m$ch0\e[0m" : "\e[4m$ch0\e[0m"
-					if $self->occup($loc);
-				$str .= "$ch{bcs}$ch{bcf}$ch0$ch{bcs}$ch{bcf}$ch{bce}";
+				my $is_src = defined $src && $loc == $src;
+				my $is_dst = defined $dst && $loc == $dst;
+				my $ch0 = $is_dst ? $ch{dcf} : $ch{bcf};
+				my $color = $is_dst ? "32" : 0;
+				if ($self->occup($loc)) {
+					my $is_king = $self->piece($loc) == King;
+					my $is_white = $self->white($loc);
+					$ch0 = $ch{$is_white
+						? $is_king ? "w_k" : "w_p"
+						: $is_king ? "b_k" : "b_p"
+					};
+					$color = $ch{$is_white ? "w_c" : "b_c"};
+					$color = "92" if $is_src;
+					$color = "91" if $postponed_captures->{$loc};
+				}
+				my $c_s = $color ? "\e[${color}m" : "";
+				my $c_e = $color ? "\e[0m" : "";
+				my $str0 = $compact1 ? $ch0 : $compact2 ? "$ch0$ch{bcf}" : "$ch{bcf}$ch0$ch{bcf}";
+				$str .= "$ch{bcs}$c_s$str0$c_e$ch{bce}";
 			} else {
-				$str .= "$ch{wcs}$ch{wcf}$ch{wcf}$ch{wcf}$ch{wce}";
+				my $str0 = $compact1 ? $ch{wcf} : $compact2 ? "$ch{wcf}$ch{wcf}" : "$ch{wcf}$ch{wcf}$ch{wcf}";
+				$str .= "$ch{wcs}$str0$ch{wce}";
 			}
-			$str .= $ch{vcl};
+			$str .= $ch{vcl}
+				unless $compact1 || $compact2;
 		}
 		$str .= "\n";
 		$str .= "   " . $ch{vll} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{ccl}" x $size_x_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{vrl}\n"
@@ -632,11 +674,8 @@ sub dump ($%) {
 	}
 	$str .= "   " . $ch{blc} . ("$ch{hcl}$ch{hcl}$ch{hcl}$ch{hbl}" x $size_x_1) . "$ch{hcl}$ch{hcl}$ch{hcl}$ch{brc}\n"
 		unless $compact;
-   $str .= "     " . join('', map { $self->ind_to_chr($_) . "   " } 1 .. $size_x) . "\n";
+   $str .= "  $x_label_space" . join('', map { $self->ind_to_chr($_) . $x_label_space } 1 .. $size_x) . "\n";
 	$str .= "\n" unless $compact;
-
-	$str =~ s/(?:^.|)(?:\e\)0)?((?:\e.*?m)*.(?:\e.*?m)*)(\016.\017|.)((?:\e.*?m)*)(\016.\017|.)((?:\e.*?m)*)(\016.\017|.)((?:\e.*?m)*)/$1$3$5$7/mg
-		if $compact;
 
 	# prepare prefix for each board line, if any
 	my $lines = () = $str =~ /\n/g;
