@@ -409,25 +409,71 @@ sub beat_destinations ($$;$$) {
 				: $self->king_beat_short->[$loc];
 }
 
-sub apply_move ($) {
+sub apply_move ($$;$) {
 	my $self = shift;
 	my $move = shift;
+	my $callback = shift;
 
 	my $src = $move->source;
-	my $dst = $move->destin(0);
 	my $beat = $move->is_beat;
 	my $color = $self->color($src);
 	my $piece = $self->piece($src);
-	for (my $n = 0; $dst != NL; $src = $dst, $dst = $move->destin(++$n)) {
+
+	my %postponed_captures = ();
+	my $postponed_crowning = 0;
+
+	my $n = 0;
+	while (1) {
+		my $dst = $move->destin($n);
+
+		$callback->(
+			board => $self, tick => $n, src => $src, dst => $dst,
+			is_last_tick => $dst == NL && !%postponed_captures && !$postponed_crowning,
+			%postponed_captures ? (postponed_captures => \%postponed_captures) : (),
+			is_capture => $beat, color => $color, piece => $piece,
+		) if $callback;
+
+		last if $dst == NL;
+
+		# move piece
 		$self->clr($src);
 		$self->set($dst, $color, $piece);
-		$self->clr($self->enclosed_figure($src, $dst)) if $beat;
+		# capture if needed
+		if ($beat) {
+			my $captured_loc = $self->enclosed_figure($src, $dst);
+			if ($::RULES{CAPTURING_POSTPONED}) {
+				$postponed_captures{$captured_loc} = 1;
+			} else {
+				$self->clr($captured_loc);
+			}
+		}
 		# convert to king if needed
 		if ($piece == Pawn && $self->is_crowning->[$color][$dst]) {
-			$self->cnv($dst);
-			$piece ^= 1;
+			if (!$move->destin($n + 1) || $::RULES{CROWNING_DURING_CAPTURE}) {
+				$self->cnv($dst);
+				$piece ^= 1;
+			} else {
+				$postponed_crowning = 1;
+			}
 		}
+
+		$src = $dst;
+		$n++;
 	}
+
+	return unless %postponed_captures || $postponed_crowning;
+
+	if ($postponed_crowning) {
+		$self->cnv($src);
+		$piece ^= 1;
+	}
+	$self->clr($_) for keys %postponed_captures;
+
+	$callback->(
+		board => $self, tick => ++$n,
+		is_last_tick => 1,
+		is_capture => $beat, color => $color, piece => $piece,
+	) if $callback;
 }
 
 sub can_piece_step ($$;$) {

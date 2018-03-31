@@ -244,7 +244,11 @@ sub show_move ($$) {
 		print "$move_str                           \n";
 	}
 
-	$board->apply_move($move);
+	$board->apply_move($move, sub {
+		my %params = @_;
+		$self->show_board(%params);
+		$self->sleep(!$params{tick} ? 0.4 : $params{is_last_tick} ? 0.2 : 0.3);
+	});
 
 	$self->{color} = $color == White ? Black : White;
 	push @$plies, $move;
