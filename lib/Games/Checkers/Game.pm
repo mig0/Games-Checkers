@@ -25,6 +25,8 @@ use Games::Checkers::BoardTree;
 use Games::Checkers::CreateMoveList;
 use Games::Checkers::MoveConstants;
 
+use Time::HiRes;
+
 sub new ($%) {
 	my $class = shift;
 	my %params = @_;
@@ -149,7 +151,7 @@ sub sleep ($$) {
 	if ($self->{frontend}) {
 		$self->call_frontend('sleep', $secs);
 	} else {
-		sleep($secs);
+		Time::HiRes::sleep($secs);
 	}	
 }
 
